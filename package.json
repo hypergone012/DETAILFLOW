@@ -14,7 +14,10 @@
     "test": "vitest run --project unit",
     "test:db": "vitest run --project db",
     "test:e2e": "playwright test",
-    "check": "pnpm typecheck && pnpm lint && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "stack": "scripts/local/stack.sh",
+    "db:migrate": "tsx scripts/db/migrate.ts",
+    "db:reset": "scripts/local/stack.sh reset && tsx scripts/db/migrate.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

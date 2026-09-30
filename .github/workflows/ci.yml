@@ -17,3 +17,23 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
+
+  db:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.27', cache: false }
+      - name: Install PostgreSQL 16 server
+        run: sudo apt-get update && sudo apt-get install -y postgresql-16 postgresql-contrib-16 && sudo systemctl stop postgresql
+      - uses: actions/cache@v4
+        with:
+          path: .local/bin/gotrue
+          key: gotrue-${{ hashFiles('scripts/local/stack.sh') }}
+      - run: pnpm install --frozen-lockfile
+      - name: Local Supabase-compatible stack (Postgres + Supabase Auth from source)
+        run: scripts/local/stack.sh init
+      - run: pnpm test:db

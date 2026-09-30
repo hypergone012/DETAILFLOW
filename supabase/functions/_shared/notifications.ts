@@ -20,6 +20,11 @@ export class TelegramProvider implements NotificationProvider {
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
+  /** The bot token is part of the URL: scrub it from anything that could be stored or logged. */
+  private redact(message: string): string {
+    return message.split(this.botToken).join('<redacted>').replace(/bot\d+:[A-Za-z0-9_-]{20,}/g, 'bot<redacted>')
+  }
+
   async send(chatId: string, text: string): Promise<SendResult> {
     let res: Response
     try {
@@ -30,14 +35,14 @@ export class TelegramProvider implements NotificationProvider {
         signal: AbortSignal.timeout(10_000),
       })
     } catch (err) {
-      return { ok: false, retryable: true, error: `network: ${err instanceof Error ? err.message : String(err)}` }
+      return { ok: false, retryable: true, error: this.redact(`network: ${err instanceof Error ? err.message : String(err)}`) }
     }
     const body = (await res.json().catch(() => null)) as
       | { ok: true; result: { message_id: number } }
       | { ok: false; error_code?: number; description?: string; parameters?: { retry_after?: number } }
       | null
     if (body?.ok) return { ok: true, providerMessageId: String(body.result.message_id) }
-    const description = body && !body.ok ? body.description ?? `HTTP ${res.status}` : `HTTP ${res.status}`
+    const description = this.redact(body && !body.ok ? body.description ?? `HTTP ${res.status}` : `HTTP ${res.status}`)
     const retryAfter = body && !body.ok ? body.parameters?.retry_after : undefined
     return {
       ok: false,

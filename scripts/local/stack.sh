@@ -16,6 +16,7 @@ AUTH_COMMIT="ce9a8eee0cc042be8c7a42981a7ddae631e41d91" # supabase/auth master, 2
 AUTH_SRC="$LOCAL/src/auth"
 AUTH_BIN="$LOCAL/bin/gotrue"
 JWT_SECRET="${DF_JWT_SECRET:-super-secret-jwt-token-with-at-least-32-characters-long}"
+EDGE_PASSWORD="${DF_EDGE_DB_PASSWORD:-local-edge-password}"
 
 PGBIN="$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)"
 [ -n "$PGBIN" ] || PGBIN="$(dirname "$(command -v pg_ctl)")"
@@ -53,6 +54,8 @@ auth_env() {
   export PORT="$AUTH_PORT"
   export GOTRUE_JWT_SECRET="$JWT_SECRET"
   export GOTRUE_JWT_EXP=3600
+  # Hosted Supabase issues iss=<SUPABASE_URL>/auth/v1; mirror it so issuer checks are exercised.
+  export GOTRUE_JWT_ISSUER="http://127.0.0.1:54321/auth/v1"
   export GOTRUE_JWT_AUD=authenticated
   export GOTRUE_JWT_DEFAULT_GROUP_NAME=authenticated
   export GOTRUE_JWT_ADMIN_ROLES=service_role
@@ -132,5 +135,8 @@ case "${1:-}" in
     start_pg; create_db postgres_df; start_auth ;;
   createdb) start_pg; create_db "${2:?db name}" ;;
   psql) shift; psql_local -d postgres_df "$@" ;;
-  *) echo "usage: $0 <build-auth|init|start|stop|status|reset|createdb NAME|psql>" >&2; exit 2 ;;
+  enable-edge-role)
+    # Local equivalent of the one-time production step in docs/PRODUCTION.md.
+    psql_local -d postgres -c "alter role df_edge with login password '$EDGE_PASSWORD'" ;;
+  *) echo "usage: $0 <build-auth|init|start|stop|status|reset|createdb NAME|psql|enable-edge-role>" >&2; exit 2 ;;
 esac

@@ -1,10 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createOwnerApi } from '../../supabase/functions/owner-api/handler.ts'
 import { createPublicApi } from '../../supabase/functions/public-api/handler.ts'
-import { connect, type Sql } from '../db/harness.ts'
-import { CORS, JWT_SECRET, TOKEN_SECRET, accessToken, bookingBody, call, seedDemo } from './helpers.ts'
+import { connect, edgeConnect, type Sql } from '../db/harness.ts'
+import { CORS, JWT_ISSUER, JWT_SECRET, TOKEN_SECRET, accessToken, bookingBody, call, seedDemo } from './helpers.ts'
 
 let sql: Sql
+// Handlers run as df_edge, the least-privilege role used in production.
+let edge: Sql
 let owner: (req: Request) => Promise<Response>
 let pub: (req: Request) => Promise<Response>
 let ids: Awaited<ReturnType<typeof seedDemo>>
@@ -28,13 +30,17 @@ async function bookSomething(slug: string, serviceSlug: string, minHoursAhead = 
 
 beforeAll(async () => {
   sql = connect(20)
+  edge = edgeConnect()
   ids = await seedDemo(sql)
-  owner = createOwnerApi({ sql, cors: CORS, auth: { jwtSecret: JWT_SECRET }, log: () => {} })
-  pub = createPublicApi({ sql, cors: CORS, manageTokenSecret: TOKEN_SECRET, log: () => {} })
+  owner = createOwnerApi({ sql: edge, cors: CORS, auth: { jwtSecret: JWT_SECRET, issuer: JWT_ISSUER }, log: () => {} })
+  pub = createPublicApi({ sql: edge, cors: CORS, manageTokenSecret: TOKEN_SECRET, log: () => {} })
   graphiteToken = await accessToken(ids.graphiteOwner)
   iceToken = await accessToken(ids.iceOwner)
 })
-afterAll(() => sql.end())
+afterAll(async () => {
+  await edge.end()
+  await sql.end()
+})
 
 describe('authentication', () => {
   it('requires a valid Supabase access token', async () => {
@@ -42,6 +48,23 @@ describe('authentication', () => {
     expect((await call(owner, 'GET', '/owner-api/me', { token: 'garbage' })).status).toBe(401)
     const forged = await accessToken(ids.graphiteOwner, 'another-secret-that-is-at-least-32-chars!!')
     expect((await call(owner, 'GET', '/owner-api/me', { token: forged })).status).toBe(401)
+  })
+
+  it('rejects expired, wrong-issuer, anonymous, unsigned and malformed tokens', async () => {
+    const expired = await accessToken(ids.graphiteOwner, JWT_SECRET, { expiresAt: Math.floor(Date.now() / 1000) - 10 })
+    const wrongIss = await accessToken(ids.graphiteOwner, JWT_SECRET, { issuer: 'https://evil.example/auth/v1' })
+    const anonymous = await accessToken(ids.graphiteOwner, JWT_SECRET, { extra: { is_anonymous: true } })
+    const serviceRole = await accessToken(ids.graphiteOwner, JWT_SECRET, { extra: { role: 'service_role' } })
+    const valid = await accessToken(ids.graphiteOwner)
+    const [h, p] = valid.split('.')
+    const unsigned = `${Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url')}.${p}.`
+    const tampered = `${h}.${Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(p!, 'base64url').toString()), sub: ids.iceOwner })).toString('base64url')}.${valid.split('.')[2]}`
+    for (const token of [expired, wrongIss, anonymous, serviceRole, unsigned, tampered]) {
+      const r = await call(owner, 'GET', '/owner-api/me', { token })
+      expect(r.status).toBe(401)
+      expect(r.body.error.code).toBe('UNAUTHORIZED')
+    }
+    expect((await call(owner, 'GET', '/owner-api/me', { token: valid })).status).toBe(200)
   })
 
   it('lists only the caller’s studios', async () => {

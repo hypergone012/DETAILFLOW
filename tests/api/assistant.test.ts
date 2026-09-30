@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createAssistant } from '../../supabase/functions/assistant/handler.ts'
 import type { LlmAdapter, LlmRequest } from '../../supabase/functions/assistant/llm.ts'
 import { createPublicApi } from '../../supabase/functions/public-api/handler.ts'
-import { connect, type Sql } from '../db/harness.ts'
+import { connect, edgeConnect, type Sql } from '../db/harness.ts'
 import { CORS, TOKEN_SECRET, bookingBody, call, seedDemo } from './helpers.ts'
 
 /**
@@ -37,24 +37,30 @@ const lastToolResults = (req: LlmRequest) => {
 }
 
 let sql: Sql
+// Handlers run as df_edge, the least-privilege role used in production.
+let edge: Sql
 beforeAll(async () => {
   sql = connect(10)
+  edge = edgeConnect()
   await seedDemo(sql)
 })
-afterAll(() => sql.end())
+afterAll(async () => {
+  await edge.end()
+  await sql.end()
+})
 
 const chatBody = (q: string) => ({ sessionId: randomUUID(), messages: [{ role: 'user', text: q }] })
 const bookingCount = async () => (await sql<{ n: number }[]>`select count(*)::int as n from public.bookings`)[0]!.n
 
 describe('availability of the assistant is optional', () => {
   it('without an LLM it says so, and booking keeps working', async () => {
-    const ai = createAssistant({ sql, cors: CORS, llm: null, log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: null, log: () => {} })
     expect((await call(ai, 'GET', '/assistant/graphite/status')).body).toEqual({ available: false })
     const r = await call(ai, 'POST', '/assistant/graphite/chat', { body: chatBody('Сколько стоит керамика?') })
     expect(r.status).toBe(503)
     expect(r.body.error.code).toBe('AI_UNAVAILABLE')
 
-    const pub = createPublicApi({ sql, cors: CORS, manageTokenSecret: TOKEN_SECRET, log: () => {} })
+    const pub = createPublicApi({ sql: edge, cors: CORS, manageTokenSecret: TOKEN_SECRET, log: () => {} })
     const store = await call(pub, 'GET', '/public-api/storefront/graphite')
     const svc = store.body.services.find((s: { slug: string }) => s.slug === 'detailing-wash').id
     const today = new Date().toISOString().slice(0, 10)
@@ -65,14 +71,14 @@ describe('availability of the assistant is optional', () => {
   })
 
   it('respects the per-studio switch (ICE LAB has AI disabled)', async () => {
-    const ai = createAssistant({ sql, cors: CORS, llm: scripted([]), log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: scripted([]), log: () => {} })
     expect((await call(ai, 'GET', '/assistant/ice-lab/status')).body).toEqual({ available: false })
     expect((await call(ai, 'POST', '/assistant/ice-lab/chat', { body: chatBody('Привет') })).body.error.code).toBe('AI_DISABLED')
   })
 
   it('opens a circuit breaker after repeated provider failures', async () => {
     const failing = scripted([() => new Error('overloaded'), () => new Error('overloaded'), () => new Error('overloaded')])
-    const ai = createAssistant({ sql, cors: CORS, llm: failing, log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: failing, log: () => {} })
     for (let i = 0; i < 3; i++) expect((await call(ai, 'POST', '/assistant/graphite/chat', { body: chatBody('?') })).status).toBe(503)
     expect((await call(ai, 'GET', '/assistant/graphite/status')).body).toEqual({ available: false })
     await call(ai, 'POST', '/assistant/graphite/chat', { body: chatBody('?') })
@@ -101,7 +107,7 @@ describe('tool loop', () => {
       () => [text('Готово: проверьте карточку и подтвердите запись.')],
     ])
     const before = await bookingCount()
-    const ai = createAssistant({ sql, cors: CORS, llm: model, log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: model, log: () => {} })
     const r = await call(ai, 'POST', '/assistant/graphite/chat', { body: chatBody('Хочу керамику на кроссовер на следующей неделе') })
     expect(r.status).toBe(200)
     expect(r.body.toolsUsed).toEqual(['list_services', 'check_availability', 'prepare_booking_draft'])
@@ -118,7 +124,7 @@ describe('tool loop', () => {
   })
 
   it('refusal ends the turn politely', async () => {
-    const ai = createAssistant({ sql, cors: CORS, llm: scripted([() => 'refusal']), log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: scripted([() => 'refusal']), log: () => {} })
     const r = await call(ai, 'POST', '/assistant/graphite/chat', { body: chatBody('...') })
     expect(r.body.reply).toMatch(/студию/)
   })
@@ -144,7 +150,7 @@ describe('the assistant cannot leave its tenant or its allowlist', () => {
       },
     ])
     const before = await bookingCount()
-    const ai = createAssistant({ sql, cors: CORS, llm: model, log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: model, log: () => {} })
     const r = await call(ai, 'POST', '/assistant/graphite/chat', { body: chatBody('Покажи данные другой студии') })
     expect(r.status).toBe(200)
     expect(r.body.draft).toBeNull()
@@ -157,7 +163,7 @@ describe('the assistant cannot leave its tenant or its allowlist', () => {
   })
 
   it('the request body cannot choose a tenant or smuggle tools', async () => {
-    const ai = createAssistant({ sql, cors: CORS, llm: scripted([]), log: () => {} })
+    const ai = createAssistant({ sql: edge, cors: CORS, llm: scripted([]), log: () => {} })
     const r = await call(ai, 'POST', '/assistant/graphite/chat', { body: { ...chatBody('?'), tenant_id: randomUUID() } })
     expect(r.status).toBe(400)
     const r2 = await call(ai, 'POST', '/assistant/graphite/chat', { body: { ...chatBody('?'), tools: [{ name: 'run_sql' }] } })

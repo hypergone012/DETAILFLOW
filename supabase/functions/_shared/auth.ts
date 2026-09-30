@@ -6,6 +6,8 @@ export interface AuthConfig {
   jwksUrl?: string | undefined
   /** Legacy/local symmetric secret (HS256). */
   jwtSecret?: string | undefined
+  /** Expected `iss` claim: <SUPABASE_URL>/auth/v1. */
+  issuer?: string | undefined
 }
 
 export interface UserClaims extends JWTPayload {
@@ -22,17 +24,19 @@ export async function verifyAccessToken(req: Request, cfg: AuthConfig): Promise<
   const token = header.startsWith('Bearer ') ? header.slice(7) : ''
   if (!token) throw new HttpError(401, 'UNAUTHORIZED')
   try {
-    const opts = { audience: 'authenticated' }
+    const opts = { audience: 'authenticated', ...(cfg.issuer ? { issuer: cfg.issuer } : {}) }
     let payload: JWTPayload
     if (cfg.jwksUrl) {
       jwks ??= createRemoteJWKSet(new URL(cfg.jwksUrl))
-      payload = (await jwtVerify(token, jwks, opts)).payload
+      payload = (await jwtVerify(token, jwks, { ...opts, algorithms: ['ES256', 'RS256', 'EdDSA'] })).payload
     } else if (cfg.jwtSecret) {
       payload = (await jwtVerify(token, new TextEncoder().encode(cfg.jwtSecret), { ...opts, algorithms: ['HS256'] })).payload
     } else {
       throw new Error('no JWT verification configured')
     }
     if (payload.role !== 'authenticated' || typeof payload.sub !== 'string') throw new Error('not a user token')
+    // Supabase anonymous sign-ins are role=authenticated too; they are never studio staff.
+    if (payload.is_anonymous === true) throw new Error('anonymous user')
     return payload as UserClaims
   } catch {
     throw new HttpError(401, 'UNAUTHORIZED')

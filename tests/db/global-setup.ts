@@ -15,6 +15,7 @@ export default async function setup(project: TestProject): Promise<void> {
   execFileSync(join(ROOT, 'scripts/local/stack.sh'), ['createdb', TEST_DB], { stdio: 'pipe' })
   const url = `postgres://postgres@127.0.0.1:${port}/${TEST_DB}`
   await migrate(url, () => {})
+  execFileSync(join(ROOT, 'scripts/local/stack.sh'), ['enable-edge-role'], { stdio: 'pipe' })
   project.provide('databaseUrl', url)
 }
 

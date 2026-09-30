@@ -10,10 +10,13 @@ import { createDispatcher } from '../notify-dispatcher/handler.ts'
 import { createOwnerApi } from '../owner-api/handler.ts'
 import { createPublicApi } from '../public-api/handler.ts'
 import { createSql } from '../_shared/db.ts'
+import { assertLeastPrivilegeRole } from '../_shared/env.ts'
 import { TelegramProvider } from '../_shared/notifications.ts'
 
 const env = (k: string, d: string) => Deno.env.get(k) ?? d
-const sql = createSql(env('SUPABASE_DB_URL', 'postgres://postgres@127.0.0.1:54322/postgres_df'))
+// Same least-privilege role as production (scripts/local/stack.sh enable-edge-role).
+const sql = createSql(env('DF_DB_URL', 'postgres://df_edge:local-edge-password@127.0.0.1:54322/postgres_df'))
+await assertLeastPrivilegeRole(sql)
 const cors = { allowedOrigins: env('DF_ALLOWED_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173').split(',') }
 const authUpstream = env('DF_AUTH_UPSTREAM', 'http://127.0.0.1:54324')
 
@@ -44,7 +47,7 @@ const functions: Record<string, (req: Request) => Promise<Response>> = {
     manageTokenSecret: env('DF_MANAGE_TOKEN_SECRET', 'local-manage-token-secret-change-me'),
     bookingsPerIpPer10Min: Number(env('DF_BOOKING_RATE_LIMIT', '10')),
   }),
-  'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long') }, telegramConfigured: !!botToken }),
+  'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long'), issuer: env('DF_JWT_ISSUER', 'http://127.0.0.1:54321/auth/v1') }, telegramConfigured: !!botToken }),
 }
 
 async function proxyAuth(req: Request, url: URL): Promise<Response> {

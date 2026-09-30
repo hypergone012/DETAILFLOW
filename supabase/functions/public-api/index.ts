@@ -1,11 +1,17 @@
 import { createSql } from '../_shared/db.ts'
-import { allowedOrigins, requireEnv } from '../_shared/env.ts'
+import { configureClientIp } from '../_shared/http.ts'
+import { allowedOrigins, assertLeastPrivilegeRole, databaseUrl, manageTokenSecret } from '../_shared/env.ts'
 import { createPublicApi } from './handler.ts'
 
+const sql = createSql(databaseUrl())
+// Fail closed: never serve with a role that can bypass RLS.
+await assertLeastPrivilegeRole(sql)
+configureClientIp({ trustedProxyHops: Number(Deno.env.get('DF_TRUSTED_PROXY_HOPS') ?? '1') })
+
 const handler = createPublicApi({
-  sql: createSql(requireEnv('SUPABASE_DB_URL')),
+  sql,
   cors: { allowedOrigins: allowedOrigins() },
-  manageTokenSecret: requireEnv('DF_MANAGE_TOKEN_SECRET'),
+  manageTokenSecret: manageTokenSecret(),
 })
 
 Deno.serve(handler)

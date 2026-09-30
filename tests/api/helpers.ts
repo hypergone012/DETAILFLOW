@@ -7,6 +7,7 @@ import { seedTenant } from '../../scripts/tenant/seed.ts'
 import { createAuthUser, type Sql } from '../db/harness.ts'
 
 export const JWT_SECRET = 'super-secret-jwt-token-with-at-least-32-characters-long'
+export const JWT_ISSUER = 'http://127.0.0.1:54321/auth/v1'
 export const TOKEN_SECRET = 'test-manage-token-secret'
 export const CORS = { allowedOrigins: ['http://127.0.0.1:5173'] }
 
@@ -26,12 +27,17 @@ export async function seedDemo(sql: Sql): Promise<{ graphite: string; iceLab: st
 }
 
 /** Same shape and signature as a Supabase Auth (GoTrue) access token with the local HS256 secret. */
-export async function accessToken(userId: string, secret = JWT_SECRET): Promise<string> {
-  return new SignJWT({ role: 'authenticated', aud: 'authenticated', email: 'owner@example.test' })
+export async function accessToken(
+  userId: string,
+  secret = JWT_SECRET,
+  opts: { issuer?: string; expiresAt?: number; extra?: Record<string, unknown> } = {},
+): Promise<string> {
+  return new SignJWT({ role: 'authenticated', aud: 'authenticated', email: 'owner@example.test', is_anonymous: false, ...opts.extra })
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setSubject(userId)
+    .setIssuer(opts.issuer ?? JWT_ISSUER)
     .setIssuedAt()
-    .setExpirationTime('1h')
+    .setExpirationTime(opts.expiresAt ?? '1h')
     .sign(new TextEncoder().encode(secret))
 }
 

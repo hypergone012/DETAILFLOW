@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createDispatcher } from '../../supabase/functions/notify-dispatcher/handler.ts'
 import { MAX_ATTEMPTS, TelegramProvider, dispatchOutbox } from '../../supabase/functions/_shared/notifications.ts'
 import { addMinutes, book, createTenant, hoursFromNow, type TenantFixture } from '../db/fixtures.ts'
-import { asUser, connect, errorOf, type Sql } from '../db/harness.ts'
+import { asUser, connect, edgeConnect, errorOf, type Sql } from '../db/harness.ts'
 
 /**
  * Local server implementing the Telegram Bot API sendMessage contract
@@ -18,6 +18,8 @@ let received: Received[] = []
 let respond: (r: Received) => { status: number; body: unknown } = () => ({ status: 200, body: { ok: true, result: { message_id: 1 } } })
 
 let sql: Sql
+// Handlers run as df_edge, the least-privilege role used in production.
+let edge: Sql
 let active: TenantFixture
 let demo: TenantFixture
 
@@ -47,6 +49,7 @@ beforeAll(async () => {
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   apiBase = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
   sql = connect(10)
+  edge = edgeConnect()
   active = await createTenant(sql, { status: 'active', bays: 5 })
   demo = await createTenant(sql, { status: 'demo', bays: 5 })
   await sql`update public.tenant_settings set telegram_chat_id = '123456789' where tenant_id in (${active.id}, ${demo.id})`
@@ -54,6 +57,7 @@ beforeAll(async () => {
   await sql`update public.notification_outbox set status = 'not_configured' where status = 'pending'`
 })
 afterAll(async () => {
+  await edge.end()
   await sql.end()
   await new Promise((r) => server.close(r))
 })
@@ -63,7 +67,7 @@ beforeEach(() => {
 })
 
 const provider = () => new TelegramProvider('TEST_TOKEN', apiBase)
-const run = (p: TelegramProvider | null = provider()) => dispatchOutbox(sql, { provider: p, appUrl: 'https://app.example' })
+const run = (p: TelegramProvider | null = provider()) => dispatchOutbox(edge, { provider: p, appUrl: 'https://app.example' })
 
 describe('demo never sends', () => {
   it('suppresses demo tenant notifications even with a bot token and a chat id', async () => {
@@ -135,7 +139,7 @@ describe('telegram delivery', () => {
 
 describe('dispatcher endpoint & owner settings', () => {
   it('requires the scheduler secret', async () => {
-    const handler = createDispatcher({ sql, provider: provider(), appUrl: 'https://app.example', secret: 's3cret', log: () => {} })
+    const handler = createDispatcher({ sql: edge, provider: provider(), appUrl: 'https://app.example', secret: 's3cret', log: () => {} })
     expect((await handler(new Request('http://x/notify-dispatcher', { method: 'POST' }))).status).toBe(401)
     const ok = await handler(new Request('http://x/notify-dispatcher', { method: 'POST', headers: { 'x-dispatcher-secret': 's3cret' } }))
     expect(ok.status).toBe(200)

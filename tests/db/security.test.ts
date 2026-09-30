@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createTenant, hashToken, hoursFromNow, addMinutes, type TenantFixture } from './fixtures.ts'
-import { asAnon, asUser, connect, errorOf, type Sql } from './harness.ts'
+import { asAnon, asUser, connect, edgeConnect, errorOf, type Sql } from './harness.ts'
 
 let sql: Sql
 let t: TenantFixture
@@ -110,5 +110,35 @@ describe('tenant_id immutability', () => {
     const other = await createTenant(sql)
     const msg = await errorOf(sql`update public.services set tenant_id = ${other.id} where id = ${t.serviceId}`)
     expect(msg).toMatch(/TENANT_IMMUTABLE|violates foreign key/)
+  })
+})
+
+describe('df_edge: the Edge Function database role', () => {
+  it('is least-privilege: no inherit, no bypassrls, no direct table or function rights', async () => {
+    const [r] = await sql`select rolsuper, rolbypassrls, rolinherit, rolcreaterole, rolcreatedb from pg_roles where rolname = 'df_edge'`
+    expect(r).toEqual({ rolsuper: false, rolbypassrls: false, rolinherit: false, rolcreaterole: false, rolcreatedb: false })
+    const tables = await sql<{ t: string }[]>`
+      select c.relname as t from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname in ('public', 'private') and c.relkind = 'r' and has_table_privilege('df_edge', c.oid, 'SELECT')`
+    expect(tables).toEqual([])
+    const fns = await sql<{ f: string }[]>`
+      select p.oid::regprocedure::text as f from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'private' and has_function_privilege('df_edge', p.oid, 'EXECUTE')`
+    expect(fns).toEqual([])
+  })
+
+  it('a query that forgets SET ROLE fails instead of bypassing RLS', async () => {
+    const edge = edgeConnect(1)
+    try {
+      expect(await errorOf(edge`select * from public.bookings limit 1`)).toMatch(/permission denied/)
+      expect(await errorOf(edge`select private.get_storefront('x')`)).toMatch(/permission denied/)
+      const [who] = await edge.begin(async (tx) => {
+        await tx`select set_config('role', 'service_role', true)`
+        return tx`select current_user as u`
+      })
+      expect(who!.u).toBe('service_role')
+    } finally {
+      await edge.end()
+    }
   })
 })

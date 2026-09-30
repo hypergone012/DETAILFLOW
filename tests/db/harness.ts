@@ -8,6 +8,14 @@ export function connect(max = 10): Sql {
   return postgres(inject('databaseUrl'), { max, onnotice: () => {} })
 }
 
+/** Connection as the least-privilege Edge Function role, exactly as deployed. */
+export function edgeConnect(max = 10): Sql {
+  const url = new URL(inject('databaseUrl'))
+  url.username = 'df_edge'
+  url.password = process.env.DF_EDGE_DB_PASSWORD ?? 'local-edge-password'
+  return postgres(url.toString(), { max, prepare: false, onnotice: () => {} })
+}
+
 type Tx = postgres.TransactionSql
 
 /** Runs `fn` exactly like PostgREST would for an anonymous request. */

@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createPublicApi } from '../../supabase/functions/public-api/handler.ts'
-import { connect, type Sql } from '../db/harness.ts'
+import { connect, edgeConnect, type Sql } from '../db/harness.ts'
 import { CORS, TOKEN_SECRET, bookingBody, call, seedDemo } from './helpers.ts'
 
 let sql: Sql
+// Handlers run as df_edge, the least-privilege role used in production.
+let edge: Sql
 let api: (req: Request) => Promise<Response>
 let ids: Awaited<ReturnType<typeof seedDemo>>
 let services: Record<string, Record<string, string>>
@@ -23,15 +25,19 @@ async function freeSlots(slug: string, serviceId: string, vehicleClass = 'sedan'
 
 beforeAll(async () => {
   sql = connect(30)
+  edge = edgeConnect()
   ids = await seedDemo(sql)
-  api = createPublicApi({ sql, cors: CORS, manageTokenSecret: TOKEN_SECRET, log: () => {} })
+  api = createPublicApi({ sql: edge, cors: CORS, manageTokenSecret: TOKEN_SECRET, log: () => {} })
   services = {}
   for (const slug of ['graphite', 'ice-lab']) {
     const r = await call(api, 'GET', `/public-api/storefront/${slug}`)
     services[slug] = Object.fromEntries(r.body.services.map((s: { slug: string; id: string }) => [s.slug, s.id]))
   }
 })
-afterAll(() => sql.end())
+afterAll(async () => {
+  await edge.end()
+  await sql.end()
+})
 
 describe('storefront', () => {
   it('serves public tenant data with CORS for allowed origins only', async () => {

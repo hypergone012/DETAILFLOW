@@ -1,0 +1,12 @@
+# Cloudflare Pages headers. The SPA fallback is automatic (no 404.html at the root).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: DENY
+
+/sw.js
+  Cache-Control: no-cache
+
+/tenants/*/manifest.webmanifest
+  Cache-Control: public, max-age=300

@@ -1,12 +1,14 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  resolve: { alias: { '@': fileURLToPath(new URL('./apps/web/src', import.meta.url)) } },
   test: {
     projects: [
       {
         test: {
           name: 'unit',
-          include: ['packages/*/src/**/*.test.ts', 'scripts/**/*.test.ts', 'supabase/functions/**/*.test.ts'],
+          include: ['packages/*/src/**/*.test.ts', 'apps/web/src/**/*.test.ts', 'scripts/**/*.test.ts', 'supabase/functions/**/*.test.ts'],
           environment: 'node',
         },
       },

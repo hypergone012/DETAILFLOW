@@ -4,6 +4,8 @@
  * and proxies /auth/v1/* to the locally built Supabase Auth (GoTrue).
  * Not deployed: on hosted Supabase each function has its own entrypoint.
  */
+import { createAssistant } from '../assistant/handler.ts'
+import { createAnthropicAdapter } from '../assistant/llm.ts'
 import { createDispatcher } from '../notify-dispatcher/handler.ts'
 import { createOwnerApi } from '../owner-api/handler.ts'
 import { createPublicApi } from '../public-api/handler.ts'
@@ -24,7 +26,17 @@ const dispatcher = createDispatcher({
   secret: dispatcherSecret,
 })
 
+const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
+const assistant = createAssistant({
+  sql,
+  cors,
+  llm: anthropicKey
+    ? createAnthropicAdapter({ apiKey: anthropicKey, model: env('DF_AI_MODEL', 'claude-opus-5-5'), effort: env('DF_AI_EFFORT', 'low') as 'low' })
+    : null,
+})
+
 const functions: Record<string, (req: Request) => Promise<Response>> = {
+  assistant,
   'notify-dispatcher': dispatcher,
   'public-api': createPublicApi({
     sql,

@@ -23,9 +23,10 @@
     "tenant:schema": "tsx scripts/tenant/schema.ts",
     "tenant:demo-art": "tsx scripts/tenant/demo-art.ts",
     "functions:serve": "deno run --allow-net --allow-env --allow-read --config supabase/functions/deno.json supabase/functions/_dev/gateway.ts",
-    "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/public-api/index.ts supabase/functions/owner-api/index.ts supabase/functions/notify-dispatcher/index.ts supabase/functions/_dev/gateway.ts"
+    "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/public-api/index.ts supabase/functions/owner-api/index.ts supabase/functions/notify-dispatcher/index.ts supabase/functions/assistant/index.ts supabase/functions/_dev/gateway.ts"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "0.129.0",
     "@axe-core/playwright": "4.13.0",
     "@detailflow/config": "workspace:*",
     "@detailflow/domain": "workspace:*",

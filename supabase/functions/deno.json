@@ -1,5 +1,9 @@
 {
-  "compilerOptions": { "strict": true, "noUncheckedIndexedAccess": true, "exactOptionalPropertyTypes": true },
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
+  },
   "imports": {
     "@detailflow/domain": "../../packages/domain/src/index.ts",
     "zod": "npm:zod@4.6.5",
@@ -7,7 +11,8 @@
     "date-fns": "npm:date-fns@4.4.0",
     "libphonenumber-js/min": "npm:libphonenumber-js@1.13.14/min",
     "postgres": "npm:postgres@3.4.9",
-    "jose": "npm:jose@6.2.12"
+    "jose": "npm:jose@6.2.12",
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@0.129.0"
   },
   "nodeModulesDir": "none"
 }

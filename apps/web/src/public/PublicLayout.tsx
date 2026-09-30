@@ -1,5 +1,9 @@
+import { lazy, Suspense } from 'react'
 import { Link, Outlet } from 'react-router'
 import { useTenant } from '@/tenant/context'
+
+// The assistant is a separate chunk: the storefront and booking never depend on it.
+const AssistantLauncher = lazy(async () => ({ default: (await import('@/assistant/AssistantLauncher')).AssistantLauncher }))
 
 export function DemoBanner() {
   return (
@@ -39,6 +43,9 @@ export function PublicLayout() {
       <div className="flex-1">
         <Outlet />
       </div>
+      <Suspense fallback={null}>
+        <AssistantLauncher />
+      </Suspense>
       <footer className="border-t border-line px-4 py-6 text-center text-xs text-faint-foreground">
         {tenant.name} · Онлайн-запись на платформе DETAILFLOW
       </footer>

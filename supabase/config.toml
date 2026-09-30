@@ -12,3 +12,7 @@ verify_jwt = false
 [functions.notify-dispatcher]
 # Called by the scheduler with the x-dispatcher-secret header, not by browsers.
 verify_jwt = false
+
+[functions.assistant]
+# Public, tenant-bound, read-only tools; rate-limited per IP and per session.
+verify_jwt = false

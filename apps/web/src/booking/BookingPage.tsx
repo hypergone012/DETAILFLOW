@@ -72,10 +72,17 @@ export function BookingPage() {
       consent: false,
       idempotencyKey: null,
     }
+    let next = base
     if (preselected && storefront.services.some((s) => s.slug === preselected) && preselected !== base.serviceSlug) {
-      return { ...base, serviceSlug: preselected, slot: null, idempotencyKey: null }
+      next = { ...base, serviceSlug: preselected, slot: null, idempotencyKey: null }
     }
-    return base
+    // Draft from the assistant: vehicle class and time are only suggestions; the server re-validates on submit.
+    const cls = params.get('class')
+    const start = params.get('start')
+    const end = params.get('end')
+    if (cls && (VEHICLE_CLASSES as readonly string[]).includes(cls)) next = { ...next, vehicle: { ...next.vehicle, vehicleClass: cls as VehicleClass } }
+    if (start && end && !Number.isNaN(Date.parse(start)) && !Number.isNaN(Date.parse(end))) next = { ...next, slot: { startAt: start, endAt: end }, idempotencyKey: null }
+    return next
   })
   const [step, setStep] = useState<Step>(() => store.load()?.step ?? (draft.serviceSlug ? 'vehicle' : 'service'))
   const [notice, setNotice] = useState<string | null>(null)

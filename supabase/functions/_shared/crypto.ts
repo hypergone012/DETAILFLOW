@@ -25,6 +25,15 @@ export async function manageToken(secret: string, bookingId: string): Promise<st
   return base64url(new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(`manage:${bookingId}`))))
 }
 
+/** Constant-time string comparison for shared secrets. */
+export function timingSafeEqual(a: string, b: string): boolean {
+  const x = enc.encode(a)
+  const y = enc.encode(b)
+  let diff = x.length ^ y.length
+  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0)
+  return diff === 0
+}
+
 export function isWellFormedToken(token: string): boolean {
   return /^[A-Za-z0-9_-]{43}$/.test(token)
 }

@@ -5,6 +5,7 @@ White-label operating system for automotive detailing studios: branded customer 
 - Public: `/s/{slug}/` · Owner: `/s/{slug}/owner/`
 - Config: `tenants/{slug}/business.json` + `assets/` → Postgres (Supabase)
 - Plan and architecture: [`docs/PLAN.md`](docs/PLAN.md)
+- Production runbook: [`docs/PRODUCTION.md`](docs/PRODUCTION.md) · status: [`docs/PRODUCTION_STATUS.md`](docs/PRODUCTION_STATUS.md)
 
 ## Stack
 
@@ -38,6 +39,7 @@ pnpm install
 scripts/local/stack.sh init      # Postgres :54322, builds Supabase Auth (GoTrue) from source, auth migrations
 scripts/local/stack.sh start     # Postgres + Auth :54324
 pnpm db:migrate
+scripts/local/stack.sh enable-edge-role   # least-privilege role used by the functions
 pnpm tenant:seed --all           # GRAPHITE Detailing + ICE LAB, owners with password "detailflow-demo"
 pnpm functions:serve             # Deno gateway :54321 (functions + /auth/v1)
 pnpm dev                         # http://127.0.0.1:5173/s/graphite
@@ -55,7 +57,10 @@ pnpm test                        # unit: engine (incl. property tests), config, 
 pnpm test:db                     # Postgres: RLS, isolation, concurrency, idempotency, API handlers, notifications, AI tools
 pnpm functions:check             # deno check of every Edge Function entrypoint
 pnpm test:e2e                    # Playwright on the full stack (recreates postgres_df)
-pnpm build
+pnpm test:pages                  # production build on the Cloudflare Pages runtime (wrangler/workerd)
+pnpm build:prod                  # https API enforced + bundle secret scan
+pnpm prod:verify-db              # read-only invariants of a deployed DB (PROD_DATABASE_URL)
+pnpm test:prod                   # production smoke (PROD_* env; skipped as NOT VERIFIED without it)
 ```
 
 ## Tenant pipeline

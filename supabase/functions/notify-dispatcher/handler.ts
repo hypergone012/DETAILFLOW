@@ -1,3 +1,4 @@
+import { timingSafeEqual } from '../_shared/crypto.ts'
 import { type Sql } from '../_shared/db.ts'
 import { HttpError, errorResponse, json } from '../_shared/http.ts'
 import { dispatchOutbox, type NotificationProvider } from '../_shared/notifications.ts'
@@ -16,7 +17,7 @@ export function createDispatcher(deps: DispatcherDeps): (req: Request) => Promis
   return async (req) => {
     try {
       if (req.method !== 'POST') throw new HttpError(405, 'NOT_FOUND')
-      if (req.headers.get('x-dispatcher-secret') !== deps.secret) throw new HttpError(401, 'UNAUTHORIZED')
+      if (!timingSafeEqual(req.headers.get('x-dispatcher-secret') ?? '', deps.secret)) throw new HttpError(401, 'UNAUTHORIZED')
       const summary = await dispatchOutbox(deps.sql, { provider: deps.provider, appUrl: deps.appUrl })
       if (summary.claimed) log('dispatched', { ...summary })
       return json(summary)

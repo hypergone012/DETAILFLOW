@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { businessSchema, checkAccentContrast, type Business } from '@detailflow/config'
 import type postgres from 'postgres'
 import { LOCAL, env } from '../lib/env.ts'
-import { serviceRoleKey } from '../lib/gotrue.ts'
+import { adminHeaders, serviceRoleKey } from '../lib/gotrue.ts'
 import { TENANTS_DIR, loadTenant } from './load.ts'
 
 export function createTenantFromTemplate(opts: { slug: string; name: string; timezone?: string; accent?: string; dir?: string }): string {
@@ -35,7 +35,7 @@ export async function inviteOwner(sql: postgres.Sql, slug: string, email: string
   const key = await serviceRoleKey()
   const res = await fetch(`${env('AUTH_URL', LOCAL.authUrl)}/admin/generate_link`, {
     method: 'POST',
-    headers: { authorization: `Bearer ${key}`, apikey: key, 'content-type': 'application/json' },
+    headers: adminHeaders(key),
     body: JSON.stringify({ type: 'invite', email }),
   })
   // The link points at the app, which exchanges the one-time token (verifyOtp) and asks for a password.

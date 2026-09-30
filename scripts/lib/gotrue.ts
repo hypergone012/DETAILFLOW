@@ -16,6 +16,17 @@ export async function serviceRoleKey(): Promise<string> {
     .sign(new TextEncoder().encode(env('DF_JWT_SECRET', LOCAL.jwtSecret)))
 }
 
+/**
+ * Headers for Auth admin calls. New Supabase secret keys (sb_secret_…) are not
+ * JWTs: they go in `apikey` only and the platform gateway authorises the call.
+ * Legacy service_role JWTs (and the locally minted one) go in both headers.
+ */
+export function adminHeaders(key: string): Record<string, string> {
+  return key.startsWith('sb_secret_')
+    ? { apikey: key, 'content-type': 'application/json' }
+    : { authorization: `Bearer ${key}`, apikey: key, 'content-type': 'application/json' }
+}
+
 export interface AdminUser {
   id: string
   email: string
@@ -26,7 +37,7 @@ export async function createUser(email: string, password: string): Promise<Admin
   const key = await serviceRoleKey()
   const res = await fetch(`${env('AUTH_URL', LOCAL.authUrl)}/admin/users`, {
     method: 'POST',
-    headers: { authorization: `Bearer ${key}`, apikey: key, 'content-type': 'application/json' },
+    headers: adminHeaders(key),
     body: JSON.stringify({ email, password, email_confirm: true }),
   })
   if (res.status === 422) {

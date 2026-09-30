@@ -31,6 +31,7 @@ export const router = createBrowserRouter([
           { path: 'bookings/:id', lazy: lazyPage(() => import('@/owner/BookingDetailPage'), 'BookingDetailPage') },
           { path: 'customers', lazy: lazyPage(() => import('@/owner/CustomersPage'), 'CustomersPage') },
           { path: 'customers/:id', lazy: lazyPage(() => import('@/owner/CustomersPage'), 'CustomerPage') },
+          { path: 'settings', lazy: lazyPage(() => import('@/owner/SettingsPage'), 'SettingsPage') },
         ],
       },
     ],

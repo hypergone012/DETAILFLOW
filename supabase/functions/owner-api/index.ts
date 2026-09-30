@@ -6,6 +6,7 @@ const handler = createOwnerApi({
   sql: createSql(requireEnv('SUPABASE_DB_URL')),
   cors: { allowedOrigins: allowedOrigins() },
   auth: authConfig(),
+  telegramConfigured: !!Deno.env.get('TELEGRAM_BOT_TOKEN'),
 })
 
 Deno.serve(handler)

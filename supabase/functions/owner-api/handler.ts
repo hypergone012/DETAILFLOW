@@ -16,6 +16,8 @@ export interface OwnerApiDeps {
   sql: Sql
   cors: CorsConfig
   auth: AuthConfig
+  /** Whether the platform Telegram bot token is configured (shown honestly in settings). */
+  telegramConfigured?: boolean
   now?: () => Date
   log?: (msg: string, extra?: Record<string, unknown>) => void
 }
@@ -241,6 +243,21 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
       const rows = await asUser(claims, (tx) => tx`
         update public.customers set internal_notes = ${body.internalNotes} where tenant_id = ${tenant.id} and id = ${customerId} returning id`)
       if (!rows[0]) throw new HttpError(404, 'NOT_FOUND')
+      return json({ ok: true })
+    }
+
+    // GET /:slug/settings ; POST /:slug/settings/telegram {chatId}
+    if (req.method === 'GET' && resource === 'settings') {
+      const [s] = await asUser(claims, (tx) => tx`
+        select telegram_chat_id, slot_step_min, min_notice_min, horizon_days, cancel_cutoff_hours, ai_enabled
+        from public.tenant_settings where tenant_id = ${tenant.id}`)
+      const [last] = await asUser(claims, (tx) => tx`
+        select status, last_error, created_at from public.notification_outbox where tenant_id = ${tenant.id} order by created_at desc limit 1`)
+      return json({ settings: s, telegramBotConfigured: deps.telegramConfigured ?? false, lastNotification: last ?? null, role: tenant.role })
+    }
+    if (req.method === 'POST' && resource === 'settings' && rid === 'telegram') {
+      const body = await readJson(req, z.strictObject({ chatId: z.string().regex(/^-?\d{3,20}$/).nullable() }))
+      await asUser(claims, (tx) => tx`select public.owner_set_telegram_chat(${tenant.id}, ${body.chatId})`)
       return json({ ok: true })
     }
 

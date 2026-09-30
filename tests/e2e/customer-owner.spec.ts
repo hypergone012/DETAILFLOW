@@ -23,6 +23,11 @@ test('customer books GRAPHITE without an account, the owner works the car throug
   await owner.locator('tbody tr').getByRole('link').click()
   await expect(owner.getByText(`№ ${ref}`)).toBeVisible()
   await expect(owner.getByText('М777ММ77').first()).toBeVisible()
+  // The dispatcher ran on the gateway; GRAPHITE is a demo studio, so nothing was sent.
+  await expect(async () => {
+    await owner.reload()
+    await expect(owner.getByText('не отправлено (демо)')).toBeVisible({ timeout: 1000 })
+  }).toPass({ timeout: 15_000 })
   for (const action of ['Принять авто', 'Начать работу', 'Готово', 'Выдать']) {
     await owner.getByRole('button', { name: action, exact: true }).click()
     await expect(owner.getByRole('button', { name: action, exact: true })).toHaveCount(0)

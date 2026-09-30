@@ -83,6 +83,14 @@ export const ownerApi = {
       bookings: Array<{ id: string; ref_code: string; status: BookingStatus; start_at: string; service_name: string; price_from_minor: string; final_price_minor: string | null; vehicle: OwnerBookingRow['vehicle'] }>
     }>(`${slug}/customers/${id}`),
   saveNotes: (slug: string, id: string, internalNotes: string) => call(`${slug}/customers/${id}`, { method: 'PATCH', body: { internalNotes } }),
+  settings: (slug: string) =>
+    call<{
+      settings: { telegram_chat_id: string | null; slot_step_min: number; min_notice_min: number; horizon_days: number; cancel_cutoff_hours: number; ai_enabled: boolean }
+      telegramBotConfigured: boolean
+      lastNotification: { status: string; last_error: string | null; created_at: string } | null
+      role: string
+    }>(`${slug}/settings`),
+  setTelegramChat: (slug: string, chatId: string | null) => call(`${slug}/settings/telegram`, { method: 'POST', body: { chatId } }),
   createBlock: (slug: string, body: { resourceId: string; startsAt: string; endsAt: string; reason: string }) => call<{ id: string }>(`${slug}/blocks`, { method: 'POST', body }),
   removeBlock: (slug: string, id: string) => call(`${slug}/blocks/${id}`, { method: 'DELETE' }),
 }

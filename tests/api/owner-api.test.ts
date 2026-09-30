@@ -155,6 +155,14 @@ describe('booking operations', () => {
     expect(letters.body.customers).toEqual([])
   })
 
+  it('settings: Telegram state is reported honestly and only the owner can change the chat', async () => {
+    const r = await call(owner, 'GET', '/owner-api/graphite/settings', { token: graphiteToken })
+    expect(r.body).toMatchObject({ telegramBotConfigured: false, role: 'owner' })
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { chatId: '987654321' } })).status).toBe(200)
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { chatId: 'not-a-chat' } })).status).toBe(400)
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: iceToken, body: { chatId: '1234' } })).status).toBe(404)
+  })
+
   it('customer notes are editable only within the own studio', async () => {
     const b = await bookSomething('graphite', 'detailing-wash')
     const detail = await call(owner, 'GET', `/owner-api/graphite/bookings/${b.id}`, { token: graphiteToken })

@@ -4,23 +4,35 @@
  * and proxies /auth/v1/* to the locally built Supabase Auth (GoTrue).
  * Not deployed: on hosted Supabase each function has its own entrypoint.
  */
+import { createDispatcher } from '../notify-dispatcher/handler.ts'
 import { createOwnerApi } from '../owner-api/handler.ts'
 import { createPublicApi } from '../public-api/handler.ts'
 import { createSql } from '../_shared/db.ts'
+import { TelegramProvider } from '../_shared/notifications.ts'
 
 const env = (k: string, d: string) => Deno.env.get(k) ?? d
 const sql = createSql(env('SUPABASE_DB_URL', 'postgres://postgres@127.0.0.1:54322/postgres_df'))
 const cors = { allowedOrigins: env('DF_ALLOWED_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173').split(',') }
 const authUpstream = env('DF_AUTH_UPSTREAM', 'http://127.0.0.1:54324')
 
+const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
+const dispatcherSecret = env('DF_DISPATCHER_SECRET', 'local-dispatcher-secret')
+const dispatcher = createDispatcher({
+  sql,
+  provider: botToken ? new TelegramProvider(botToken, env('TELEGRAM_API_BASE', 'https://api.telegram.org')) : null,
+  appUrl: env('DF_APP_URL', 'http://127.0.0.1:5173'),
+  secret: dispatcherSecret,
+})
+
 const functions: Record<string, (req: Request) => Promise<Response>> = {
+  'notify-dispatcher': dispatcher,
   'public-api': createPublicApi({
     sql,
     cors,
     manageTokenSecret: env('DF_MANAGE_TOKEN_SECRET', 'local-manage-token-secret-change-me'),
     bookingsPerIpPer10Min: Number(env('DF_BOOKING_RATE_LIMIT', '10')),
   }),
-  'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long') } }),
+  'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long') }, telegramConfigured: !!botToken }),
 }
 
 async function proxyAuth(req: Request, url: URL): Promise<Response> {
@@ -36,6 +48,14 @@ async function proxyAuth(req: Request, url: URL): Promise<Response> {
   const res = new Response(upstream.body, upstream)
   for (const [k, v] of Object.entries(corsHeaders)) res.headers.set(k, v)
   return res
+}
+
+// Local stand-in for the Supabase cron schedule that invokes notify-dispatcher.
+const dispatchEveryMs = Number(env('DF_DISPATCH_INTERVAL_MS', '15000'))
+if (dispatchEveryMs > 0) {
+  setInterval(() => {
+    void dispatcher(new Request('http://local/functions/v1/notify-dispatcher', { method: 'POST', headers: { 'x-dispatcher-secret': dispatcherSecret } }))
+  }, dispatchEveryMs)
 }
 
 const port = Number(env('DF_GATEWAY_PORT', '54321'))

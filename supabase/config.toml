@@ -8,3 +8,7 @@ verify_jwt = false
 [functions.owner-api]
 # The handler verifies the Supabase Auth JWT itself (JWKS) and runs queries under RLS.
 verify_jwt = false
+
+[functions.notify-dispatcher]
+# Called by the scheduler with the x-dispatcher-secret header, not by browsers.
+verify_jwt = false

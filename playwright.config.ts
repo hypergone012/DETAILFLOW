@@ -27,7 +27,7 @@ export default defineConfig({
   webServer: [
     {
       // All E2E traffic comes from 127.0.0.1, so the per-IP booking limit is raised here only.
-      command: 'DF_BOOKING_RATE_LIMIT=500 pnpm -s functions:serve',
+      command: 'DF_BOOKING_RATE_LIMIT=500 DF_DISPATCH_INTERVAL_MS=1000 pnpm -s functions:serve',
       url: 'http://127.0.0.1:54321/functions/v1/public-api/storefront/graphite',
       reuseExistingServer: false,
       timeout: 120_000,

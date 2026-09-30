@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardList, LogOut, Users } from 'lucide-react'
+import { CalendarDays, ClipboardList, LogOut, Settings, Users } from 'lucide-react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { cn } from '@/lib/utils'
 import { useMe } from '@/owner/api'
@@ -12,6 +12,7 @@ const NAV = [
   { to: '', label: 'Сегодня', icon: CalendarDays, end: true },
   { to: 'bookings', label: 'Записи', icon: ClipboardList, end: false },
   { to: 'customers', label: 'Клиенты', icon: Users, end: false },
+  { to: 'settings', label: 'Настройки', icon: Settings, end: false },
 ]
 
 export function OwnerLayout() {
@@ -59,7 +60,7 @@ export function OwnerLayout() {
       <div className="flex-1">
         <Outlet />
       </div>
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-line bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to ? `${base}/${n.to}` : base} end={n.end}
             className={({ isActive }) => cn('flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground', isActive && 'text-accent')}>

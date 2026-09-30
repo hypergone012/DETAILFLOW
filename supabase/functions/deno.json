@@ -5,7 +5,7 @@
     "exactOptionalPropertyTypes": true
   },
   "imports": {
-    "@detailflow/domain": "../../packages/domain/src/index.ts",
+    "@detailflow/domain": "./_vendor/domain/index.ts",
     "zod": "npm:zod@4.6.5",
     "@date-fns/tz": "npm:@date-fns/tz@1.5.0",
     "date-fns": "npm:date-fns@4.4.0",

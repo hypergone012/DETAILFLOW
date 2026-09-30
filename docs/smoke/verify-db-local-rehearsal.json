@@ -1,0 +1,108 @@
+{
+  "label": "local-rehearsal",
+  "at": "2026-09-30T23:21:15.975Z",
+  "passed": true,
+  "results": [
+    {
+      "check": "all migrations applied",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "extension btree_gist",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "extension pgcrypto",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "extension pg_cron (dispatcher schedule)",
+      "ok": false,
+      "severity": "warn",
+      "detail": "run supabase/sql/schedule-dispatcher.sql"
+    },
+    {
+      "check": "anon has no table privileges",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "authenticated has no table write privileges",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "RLS enabled on every public table",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "df_edge exists, NOINHERIT, no bypassrls/superuser",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "df_edge can log in (supabase/sql/enable-edge-role.sql applied)",
+      "ok": true,
+      "severity": "warn"
+    },
+    {
+      "check": "df_edge has no direct table rights",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "private.* not executable by anon/authenticated/df_edge",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "SECURITY DEFINER functions pin search_path",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "composite (tenant_id, id) foreign keys",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "exclusion constraint on resource_allocations",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "unique (tenant_id, idempotency_key)",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "tenant_id immutability trigger on every tenant table",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "tenants present",
+      "ok": true,
+      "severity": "warn"
+    },
+    {
+      "check": "tenants (info)",
+      "ok": true,
+      "severity": "warn",
+      "detail": [
+        {
+          "slug": "graphite",
+          "status": "demo"
+        },
+        {
+          "slug": "ice-lab",
+          "status": "demo"
+        }
+      ]
+    }
+  ]
+}

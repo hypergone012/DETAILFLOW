@@ -1,0 +1,74 @@
+name: Deploy production
+# Manual only. Secrets live in the GitHub environment "production" (docs/PRODUCTION.md).
+on:
+  workflow_dispatch:
+
+concurrency: { group: production-deploy, cancel-in-progress: false }
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - run: pnpm install --frozen-lockfile
+
+      - name: Gate — unit tests, typecheck, lint, function type-check
+        run: pnpm typecheck && pnpm lint && pnpm test && pnpm functions:check
+
+      - name: Supabase — migrations, secrets, Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PROD_FUNCTION_SECRETS: ${{ secrets.PROD_FUNCTION_SECRETS }}
+        run: |
+          umask 077
+          export PROD_SECRETS_FILE="$(mktemp)"
+          printf '%s\n' "$PROD_FUNCTION_SECRETS" > "$PROD_SECRETS_FILE"
+          scripts/prod/deploy-supabase.sh
+          rm -f "$PROD_SECRETS_FILE"
+
+      - name: Frontend — production build (https API enforced) + secret scan
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: pnpm build:prod
+
+      - name: Cloudflare Pages deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec wrangler pages deploy apps/web/dist --project-name "${{ vars.CF_PAGES_PROJECT || 'detailflow' }}" --branch main --commit-dirty=true
+
+      - name: Verify database invariants
+        env: { PROD_DATABASE_URL: '${{ secrets.PROD_DATABASE_URL }}' }
+        run: pnpm prod:verify-db
+
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Production smoke (GRAPHITE flow + ICE LAB isolation)
+        env:
+          PROD_APP_URL: ${{ vars.PROD_APP_URL }}
+          PROD_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          PROD_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          PROD_GRAPHITE_OWNER_EMAIL: ${{ secrets.PROD_GRAPHITE_OWNER_EMAIL }}
+          PROD_GRAPHITE_OWNER_PASSWORD: ${{ secrets.PROD_GRAPHITE_OWNER_PASSWORD }}
+          PROD_ICE_OWNER_EMAIL: ${{ secrets.PROD_ICE_OWNER_EMAIL }}
+          PROD_ICE_OWNER_PASSWORD: ${{ secrets.PROD_ICE_OWNER_PASSWORD }}
+          PROD_SMOKE_PHONE: ${{ vars.PROD_SMOKE_PHONE }}
+        run: pnpm test:prod
+
+      - name: Claude live smoke through the deployed assistant
+        env:
+          PROD_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          PROD_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: pnpm prod:ai-smoke
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: production-smoke, path: 'docs/smoke/' }

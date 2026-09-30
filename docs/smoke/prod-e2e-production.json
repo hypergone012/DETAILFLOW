@@ -1,0 +1,311 @@
+{
+  "config": {
+    "configFile": "/home/user/DETAILFLOW/playwright.prod.config.ts",
+    "rootDir": "/home/user/DETAILFLOW/tests/prod",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/smoke/prod-e2e-production.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/user/DETAILFLOW/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/home/user/DETAILFLOW/tests/prod",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 240000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "graphite-flow.spec.ts",
+      "file": "graphite-flow.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Telegram notification",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL, PROD_GRAPHITE_OWNER_EMAIL, PROD_GRAPHITE_OWNER_PASSWORD",
+                  "location": {
+                    "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                    "line": 15,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 17,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-09-30T23:23:29.471Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL, PROD_GRAPHITE_OWNER_EMAIL, PROD_GRAPHITE_OWNER_PASSWORD",
+                      "location": {
+                        "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                        "line": 15,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "9af92f3b2a01687a2bb1-e008d0178db2a3079897",
+          "file": "graphite-flow.spec.ts",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "ice-lab.spec.ts",
+      "file": "ice-lab.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "ICE LAB is a different studio and GRAPHITE stays out of reach",
+          "file": "ice-lab.spec.ts",
+          "line": 4,
+          "column": 6,
+          "specs": [
+            {
+              "title": "own schedule, timezone and catalog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 240000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL",
+                      "location": {
+                        "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                        "line": 15,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-30T23:23:29.599Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL",
+                          "location": {
+                            "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                            "line": 15,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c492136f00c4289356c7-96b58b6fe3ca70af750a",
+              "file": "ice-lab.spec.ts",
+              "line": 7,
+              "column": 3
+            },
+            {
+              "title": "GRAPHITE data is not reachable through ICE LAB",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 240000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL",
+                      "location": {
+                        "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                        "line": 15,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 2,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-30T23:23:29.620Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL",
+                          "location": {
+                            "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                            "line": 15,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c492136f00c4289356c7-f04e17636018a5996032",
+              "file": "ice-lab.spec.ts",
+              "line": 32,
+              "column": 3
+            },
+            {
+              "title": "ICE LAB owner cannot open GRAPHITE (UI and API)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 240000,
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL",
+                      "location": {
+                        "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                        "line": 15,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "expectedStatus": "skipped",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "skipped",
+                      "duration": 1,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-30T23:23:29.639Z",
+                      "annotations": [
+                        {
+                          "type": "skip",
+                          "description": "NOT VERIFIED: missing PROD_APP_URL, PROD_SUPABASE_URL",
+                          "location": {
+                            "file": "/home/user/DETAILFLOW/tests/prod/env.ts",
+                            "line": 15,
+                            "column": 8
+                          }
+                        }
+                      ],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "skipped"
+                }
+              ],
+              "id": "c492136f00c4289356c7-238433a77f402059ed0e",
+              "file": "ice-lab.spec.ts",
+              "line": 42,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-09-30T23:23:28.532Z",
+    "duration": 1187.495,
+    "expected": 0,
+    "skipped": 4,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

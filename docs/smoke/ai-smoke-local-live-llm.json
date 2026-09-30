@@ -1,0 +1,6 @@
+{
+  "at": "2026-09-30T23:21:52.368Z",
+  "label": "local-live-llm",
+  "verified": false,
+  "reason": "missing ANTHROPIC_API_KEY"
+}

@@ -10,3 +10,5 @@ playwright-report/
 coverage/
 .DS_Store
 apps/web/public/tenants/
+supabase/functions/_vendor/
+.wrangler/

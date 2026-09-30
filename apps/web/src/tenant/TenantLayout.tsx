@@ -6,6 +6,26 @@ import { ApiError, publicApi } from '@/lib/api'
 import { TenantContext } from '@/tenant/context'
 import { Skeleton } from '@/ui/skeleton'
 
+function setHeadLink(rel: string, href: string): void {
+  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`)
+  if (!el) {
+    el = document.createElement('link')
+    el.rel = rel
+    document.head.appendChild(el)
+  }
+  if (el.getAttribute('href') !== href) el.href = href
+}
+
+function setMeta(name: string, content: string): void {
+  let el = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.name = name
+    document.head.appendChild(el)
+  }
+  el.content = content
+}
+
 export function useStorefrontQuery(slug: string) {
   return useQuery({
     queryKey: ['storefront', slug],
@@ -29,7 +49,12 @@ export function TenantLayout() {
     root.setProperty('--tenant-accent-subtle', t.accentSubtle)
     root.setProperty('--tenant-on-accent', t.onAccent)
     document.title = storefront.tenant.name
-  }, [storefront])
+    // Each studio installs as its own app (manifest scope = /s/{slug}/).
+    setHeadLink('manifest', `/tenants/${slug}/manifest.webmanifest`)
+    setHeadLink('apple-touch-icon', `/tenants/${slug}/icons/icon-192.png`)
+    setMeta('apple-mobile-web-app-title', storefront.tenant.name)
+    setMeta('apple-mobile-web-app-capable', 'yes')
+  }, [storefront, slug])
 
   const value = useMemo(() => (storefront ? { slug, storefront } : null), [slug, storefront])
 

@@ -14,7 +14,7 @@ export default defineConfig({
     VitePWA({
       // Per-tenant manifests are generated into public/s/{slug}/ by the tenant pipeline.
       manifest: false,
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       injectRegister: null,
       workbox: {
         navigateFallback: '/index.html',
@@ -24,7 +24,13 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         runtimeCaching: [
           {
-            // Availability, bookings, owner data: never served from cache.
+            // Public studio profile + catalog: usable offline, refreshed in the background.
+            urlPattern: ({ url }) => url.pathname.startsWith('/functions/v1/public-api/storefront/'),
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'storefront', expiration: { maxEntries: 20, maxAgeSeconds: 7 * 24 * 3600 } },
+          },
+          {
+            // Availability, bookings, manage links, owner data, assistant: never served from cache.
             urlPattern: ({ url }) => url.pathname.startsWith('/functions/v1/'),
             handler: 'NetworkOnly',
           },

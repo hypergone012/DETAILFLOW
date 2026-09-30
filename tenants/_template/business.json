@@ -1,0 +1,203 @@
+{
+  "$schema": "../business.schema.json",
+  "slug": "template",
+  "name": "Название студии",
+  "status": "draft",
+  "timezone": "Europe/Moscow",
+  "currency": "RUB",
+  "locale": "ru-RU",
+  "branding": {
+    "accent": "#d6a84a",
+    "logo": "assets/logo.svg",
+    "hero": "assets/hero.svg",
+    "tagline": "Детейлинг-студия. Опишите студию одной строкой.",
+    "about": "Пара предложений о студии: оборудование, подход, гарантия.",
+    "gallery": [],
+    "demoArtwork": true
+  },
+  "contacts": {
+    "address": "Город, улица, дом"
+  },
+  "policy": {
+    "slotStepMin": 30,
+    "minNoticeMin": 120,
+    "horizonDays": 45,
+    "cancelCutoffHours": 24,
+    "requiresConfirmation": false,
+    "maxActiveBookingsPerPhone": 3
+  },
+  "hours": {
+    "mon": [
+      [
+        "10:00",
+        "20:00"
+      ]
+    ],
+    "tue": [
+      [
+        "10:00",
+        "20:00"
+      ]
+    ],
+    "wed": [
+      [
+        "10:00",
+        "20:00"
+      ]
+    ],
+    "thu": [
+      [
+        "10:00",
+        "20:00"
+      ]
+    ],
+    "fri": [
+      [
+        "10:00",
+        "20:00"
+      ]
+    ],
+    "sat": [
+      [
+        "10:00",
+        "18:00"
+      ]
+    ],
+    "sun": []
+  },
+  "exceptions": [],
+  "resources": [
+    {
+      "key": "wash-1",
+      "type": "wash_bay",
+      "name": "Моечный бокс"
+    },
+    {
+      "key": "bay-1",
+      "type": "detail_bay",
+      "name": "Бокс 1"
+    }
+  ],
+  "services": [
+    {
+      "slug": "detailing-wash",
+      "category": "detailing_wash",
+      "name": "Детейлинг-мойка",
+      "summary": "Трёхфазная мойка, чистка дисков, сушка без контакта",
+      "description": "Предварительная пена, ручная мойка по методу двух вёдер, очистка дисков и колёсных арок, сушка тёплым воздухом, обработка резины и пластика.",
+      "requirements": [],
+      "resourceType": "wash_bay",
+      "durationMin": 120,
+      "priceFrom": 3500,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 15,
+      "multiDay": false,
+      "variants": {
+        "suv": {
+          "durationMin": 150,
+          "priceFrom": 4500
+        },
+        "large_suv": {
+          "durationMin": 180,
+          "priceFrom": 5500
+        },
+        "van": {
+          "durationMin": 180,
+          "priceFrom": 5500
+        }
+      }
+    },
+    {
+      "slug": "interior-deep-clean",
+      "category": "interior_detailing",
+      "name": "Химчистка салона",
+      "summary": "Полная химчистка с демонтажем сидений по необходимости",
+      "description": "Потолок, сиденья, ковровое покрытие, багажник, пластик и кожа. Озонирование в конце работ. Итоговая цена зависит от степени загрязнения — фиксируем при приёмке.",
+      "requirements": [
+        "Освободите салон и багажник от личных вещей"
+      ],
+      "resourceType": "detail_bay",
+      "durationMin": 360,
+      "priceFrom": 18000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": false,
+      "variants": {
+        "suv": {
+          "durationMin": 420,
+          "priceFrom": 22000
+        },
+        "large_suv": {
+          "durationMin": 480,
+          "priceFrom": 26000
+        },
+        "van": {
+          "durationMin": 480,
+          "priceFrom": 26000
+        }
+      }
+    },
+    {
+      "slug": "paint-correction-2step",
+      "category": "paint_correction",
+      "name": "Полировка кузова в 2 этапа",
+      "summary": "Удаление голограмм и до 80% царапин, глубокий блеск",
+      "description": "Замер толщины ЛКП по всем элементам, абразивная и финишная полировка, обезжиривание. Автомобиль остаётся в боксе до завершения работ.",
+      "requirements": [
+        "Не мыть автомобиль перед визитом — мойка входит в подготовку"
+      ],
+      "resourceType": "detail_bay",
+      "durationMin": 1200,
+      "priceFrom": 35000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": true,
+      "variants": {
+        "suv": {
+          "durationMin": 1440,
+          "priceFrom": 42000
+        },
+        "large_suv": {
+          "durationMin": 1680,
+          "priceFrom": 52000
+        }
+      }
+    },
+    {
+      "slug": "ceramic-3-layers",
+      "category": "ceramic_coating",
+      "name": "Керамика 9H, 3 слоя",
+      "summary": "Лёгкая полировка + три слоя керамики, гарантия 3 года",
+      "description": "Подготовительная полировка, нанесение трёх слоёв кварцевого покрытия, ИК-сушка и выдержка в тёплом боксе. Время отверждения включено в срок.",
+      "requirements": [
+        "Первая мойка после нанесения — не раньше чем через 14 дней"
+      ],
+      "resourceType": "detail_bay",
+      "durationMin": 1560,
+      "priceFrom": 65000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 60,
+      "multiDay": true,
+      "requiresConfirmation": true,
+      "variants": {
+        "suv": {
+          "durationMin": 1800,
+          "priceFrom": 78000
+        },
+        "large_suv": {
+          "durationMin": 2100,
+          "priceFrom": 92000
+        }
+      }
+    }
+  ],
+  "owners": [
+    {
+      "email": "owner@example.test",
+      "role": "owner"
+    }
+  ],
+  "ai": {
+    "enabled": false
+  }
+}

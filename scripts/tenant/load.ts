@@ -11,8 +11,8 @@ export function tenantSlugs(): string[] {
     .sort()
 }
 
-export function loadTenant(slug: string): ValidationResult {
-  const dir = join(TENANTS_DIR, slug)
+export function loadTenant(slug: string, root = TENANTS_DIR): ValidationResult {
+  const dir = join(root, slug)
   const raw: unknown = JSON.parse(readFileSync(join(dir, 'business.json'), 'utf8'))
   const result = validateBusiness(raw, { assetExists: (p) => existsSync(join(dir, p)) })
   if (result.ok && result.business!.slug !== slug) {

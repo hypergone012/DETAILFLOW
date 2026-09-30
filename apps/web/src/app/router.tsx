@@ -21,6 +21,18 @@ export const router = createBrowserRouter([
         ],
       },
       { path: 'book', lazy: lazyPage(() => import('@/booking/BookingPage'), 'BookingPage') },
+      { path: 'owner/login', lazy: lazyPage(() => import('@/owner/LoginPage'), 'LoginPage') },
+      {
+        path: 'owner',
+        lazy: lazyPage(() => import('@/owner/OwnerLayout'), 'OwnerLayout'),
+        children: [
+          { index: true, lazy: lazyPage(() => import('@/owner/TodayPage'), 'TodayPage') },
+          { path: 'bookings', lazy: lazyPage(() => import('@/owner/BookingsPage'), 'BookingsPage') },
+          { path: 'bookings/:id', lazy: lazyPage(() => import('@/owner/BookingDetailPage'), 'BookingDetailPage') },
+          { path: 'customers', lazy: lazyPage(() => import('@/owner/CustomersPage'), 'CustomersPage') },
+          { path: 'customers/:id', lazy: lazyPage(() => import('@/owner/CustomersPage'), 'CustomerPage') },
+        ],
+      },
     ],
   },
   { path: '*', element: <RouteError notFound /> },

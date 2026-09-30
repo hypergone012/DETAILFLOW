@@ -1,4 +1,4 @@
-import { STATUS_LABELS, VEHICLE_CLASS_LABELS, formatPriceFrom, type BookingStatus } from '@detailflow/domain'
+import { STATUS_LABELS, VEHICLE_CLASS_LABELS, formatPriceFrom } from '@detailflow/domain'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, CheckCircle2, Loader2, X } from 'lucide-react'
 import { useState } from 'react'
@@ -6,6 +6,7 @@ import { Link, useLocation, useParams } from 'react-router'
 import { SlotPicker, type PickedSlot } from '@/booking/SlotPicker'
 import { ApiError, errorMessage, publicApi } from '@/lib/api'
 import { addDaysIso, formatDay, formatTime, formatWindow, todayIn } from '@/lib/format'
+import { STATUS_TONE } from '@/lib/status'
 import { useTenant } from '@/tenant/context'
 import { Badge } from '@/ui/badge'
 import { Button } from '@/ui/button'
@@ -13,16 +14,6 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/ui/sheet'
 import { Skeleton } from '@/ui/skeleton'
 import { Textarea } from '@/ui/textarea'
 
-export const STATUS_TONE: Record<BookingStatus, 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info'> = {
-  requested: 'warning',
-  confirmed: 'success',
-  checked_in: 'info',
-  in_progress: 'info',
-  ready: 'accent',
-  completed: 'neutral',
-  cancelled: 'danger',
-  no_show: 'danger',
-}
 
 export function ManagePage() {
   const { slug, storefront } = useTenant()

@@ -17,7 +17,7 @@ const env = (k: string, d: string) => Deno.env.get(k) ?? d
 // Same least-privilege role as production (scripts/local/stack.sh enable-edge-role).
 const sql = createSql(env('DF_DB_URL', 'postgres://df_edge:local-edge-password@127.0.0.1:54322/postgres_df'))
 await assertLeastPrivilegeRole(sql)
-const cors = { allowedOrigins: env('DF_ALLOWED_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173').split(',') }
+const cors = { allowedOrigins: env('DF_ALLOWED_ORIGINS', 'http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173,http://127.0.0.1:8788').split(',') }
 const authUpstream = env('DF_AUTH_UPSTREAM', 'http://127.0.0.1:54324')
 
 const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')

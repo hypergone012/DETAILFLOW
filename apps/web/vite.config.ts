@@ -1,14 +1,19 @@
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { cloudflarePagesHeaders } from './build/cloudflare-pages'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, fileURLToPath(new URL('.', import.meta.url)), 'VITE_')
+  const apiUrl = env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321'
+  return {
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   plugins: [
+    cloudflarePagesHeaders(apiUrl),
     react(),
     tailwindcss(),
     VitePWA({
@@ -43,6 +48,11 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // Keep fonts as files: data: URIs would need font-src data: in the CSP.
+    assetsInlineLimit: (file: string) => (file.endsWith('.woff2') || file.endsWith('.woff') ? false : undefined),
+  },
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },
+}
 })

@@ -25,7 +25,10 @@
     "functions:serve": "deno run --allow-net --allow-env --allow-read --config supabase/functions/deno.json supabase/functions/_dev/gateway.ts",
     "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/public-api/index.ts supabase/functions/owner-api/index.ts supabase/functions/notify-dispatcher/index.ts supabase/functions/assistant/index.ts supabase/functions/_dev/gateway.ts",
     "tenant": "tsx scripts/tenant/cli.ts",
-    "tenant:icons": "tsx scripts/tenant/icons.ts"
+    "tenant:icons": "tsx scripts/tenant/icons.ts",
+    "security:scan-bundle": "tsx scripts/security/scan-bundle.ts",
+    "build:prod": "DF_REQUIRE_HTTPS_API=1 pnpm build && pnpm security:scan-bundle",
+    "test:pages": "playwright test -c playwright.pages.config.ts"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "0.129.0",
@@ -46,6 +49,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.0",
     "vitest": "5.0.3",
+    "wrangler": "4.143.1",
     "zod": "4.6.5"
   }
 }

@@ -1,0 +1,10 @@
+# Supabase CLI project config (hosted deploy: `supabase functions deploy`).
+project_id = "detailflow"
+
+[functions.public-api]
+# Public, account-less API: authorisation is the slug + manage token, not a JWT.
+verify_jwt = false
+
+[functions.owner-api]
+# The handler verifies the Supabase Auth JWT itself (JWKS) and runs queries under RLS.
+verify_jwt = false

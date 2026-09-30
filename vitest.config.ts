@@ -13,7 +13,7 @@ export default defineConfig({
       {
         test: {
           name: 'db',
-          include: ['tests/db/**/*.test.ts'],
+          include: ['tests/db/**/*.test.ts', 'tests/api/**/*.test.ts'],
           environment: 'node',
           globalSetup: ['tests/db/global-setup.ts'],
           testTimeout: 60_000,

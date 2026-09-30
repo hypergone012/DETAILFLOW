@@ -21,7 +21,9 @@
     "tenant:seed": "tsx scripts/tenant/seed.ts",
     "tenant:assets": "tsx scripts/tenant/sync-assets.ts",
     "tenant:schema": "tsx scripts/tenant/schema.ts",
-    "tenant:demo-art": "tsx scripts/tenant/demo-art.ts"
+    "tenant:demo-art": "tsx scripts/tenant/demo-art.ts",
+    "functions:serve": "deno run --allow-net --allow-env --allow-read --config supabase/functions/deno.json supabase/functions/_dev/gateway.ts",
+    "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/public-api/index.ts supabase/functions/owner-api/index.ts supabase/functions/_dev/gateway.ts"
   },
   "devDependencies": {
     "@detailflow/config": "workspace:*",
@@ -29,6 +31,7 @@
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.56.1",
     "@types/node": "26.6.3",
+    "deno": "2.9.6",
     "eslint": "10.11.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "fast-check": "4.10.2",

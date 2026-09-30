@@ -1,0 +1,37 @@
+{
+  "version": "5",
+  "specifiers": {
+    "npm:@date-fns/tz@1.5.0": "1.5.0",
+    "npm:jose@6.2.12": "6.2.12",
+    "npm:libphonenumber-js@1.13.14": "1.13.14",
+    "npm:postgres@3.4.9": "3.4.9",
+    "npm:zod@4.6.5": "4.6.5"
+  },
+  "npm": {
+    "@date-fns/tz@1.5.0": {
+      "integrity": "sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg=="
+    },
+    "jose@6.2.12": {
+      "integrity": "sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw=="
+    },
+    "libphonenumber-js@1.13.14": {
+      "integrity": "sha512-llihgCcx0BFLksecLP+x1J+6JDE1GsXS1RN/LoPF6qcwpeQcnjj0lcvZxY8AzbEpYwyZWPZW/nDuqkqzm3amiw=="
+    },
+    "postgres@3.4.9": {
+      "integrity": "sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw=="
+    },
+    "zod@4.6.5": {
+      "integrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q=="
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@date-fns/tz@1.5.0",
+      "npm:date-fns@4.4.0",
+      "npm:jose@6.2.12",
+      "npm:libphonenumber-js@1.13.14",
+      "npm:postgres@3.4.9",
+      "npm:zod@4.6.5"
+    ]
+  }
+}

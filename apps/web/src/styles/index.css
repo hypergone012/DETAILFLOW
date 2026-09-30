@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/unbounded';
+@import '@fontsource-variable/jetbrains-mono';
+
+/*
+ * DETAILFLOW design tokens.
+ * Graphite surfaces, one tenant accent (set at runtime by TenantTheme via --tenant-accent*),
+ * hairline borders, mono for data (plates, times, prices, refs).
+ */
+:root {
+  color-scheme: dark;
+
+  --tenant-accent: #d6a84a;
+  --tenant-accent-hover: #e2b85f;
+  --tenant-accent-subtle: rgb(214 168 74 / 0.14);
+  --tenant-on-accent: #0b0c0e;
+
+  --background: #0b0c0e;
+  --surface-1: #121418;
+  --surface-2: #181b20;
+  --surface-3: #20242a;
+  --foreground: #e8eaed;
+  --muted-foreground: #9aa0a6;
+  --faint-foreground: #6b7178;
+  --line: rgb(255 255 255 / 0.08);
+  --line-strong: rgb(255 255 255 / 0.16);
+
+  --success: #4fb286;
+  --warning: #d9a441;
+  --danger: #e0605a;
+  --info: #6aa5d8;
+
+  --radius: 6px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-faint-foreground: var(--faint-foreground);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--tenant-accent);
+  --color-accent-hover: var(--tenant-accent-hover);
+  --color-accent-subtle: var(--tenant-accent-subtle);
+  --color-on-accent: var(--tenant-on-accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  /* shadcn compatibility aliases */
+  --color-primary: var(--tenant-accent);
+  --color-primary-foreground: var(--tenant-on-accent);
+  --color-border: var(--line);
+  --color-input: var(--line-strong);
+  --color-ring: var(--tenant-accent);
+  --color-popover: var(--surface-2);
+  --color-popover-foreground: var(--foreground);
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--tenant-accent);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility font-display-wide {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

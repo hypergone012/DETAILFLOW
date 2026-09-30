@@ -1,0 +1,180 @@
+{
+  "$schema": "../business.schema.json",
+  "slug": "graphite",
+  "name": "GRAPHITE Detailing",
+  "status": "demo",
+  "timezone": "Europe/Moscow",
+  "currency": "RUB",
+  "locale": "ru-RU",
+  "branding": {
+    "accent": "#d6a84a",
+    "logo": "assets/logo.svg",
+    "hero": "assets/hero.svg",
+    "tagline": "Детейлинг-студия полного цикла. Керамика, PPF, полировка.",
+    "about": "Четыре бокса со сценическим светом, климат-контроль для отверждения покрытий, собственная моечная зона. Каждый автомобиль проходит осмотр при приёмке: итоговую стоимость фиксируем до начала работ.",
+    "gallery": [
+      { "src": "assets/gallery-paint.svg", "caption": "Контроль ЛКП под светом 6500K" },
+      { "src": "assets/gallery-wheel.svg", "caption": "Диски и суппорты — отдельный этап" }
+    ],
+    "demoArtwork": true
+  },
+  "contacts": {
+    "address": "Москва, Электрозаводская ул., 27с8 (демо-адрес)",
+    "mapUrl": "https://yandex.ru/maps/?text=%D0%AD%D0%BB%D0%B5%D0%BA%D1%82%D1%80%D0%BE%D0%B7%D0%B0%D0%B2%D0%BE%D0%B4%D1%81%D0%BA%D0%B0%D1%8F%2027",
+    "phoneDisplay": "+7 495 123-45-67",
+    "phone": "+74951234567",
+    "telegramUrl": "https://t.me/graphite_detailing_demo"
+  },
+  "policy": {
+    "slotStepMin": 30,
+    "minNoticeMin": 120,
+    "horizonDays": 45,
+    "cancelCutoffHours": 24,
+    "requiresConfirmation": false,
+    "maxActiveBookingsPerPhone": 3
+  },
+  "hours": {
+    "mon": [["09:00", "21:00"]],
+    "tue": [["09:00", "21:00"]],
+    "wed": [["09:00", "21:00"]],
+    "thu": [["09:00", "21:00"]],
+    "fri": [["09:00", "21:00"]],
+    "sat": [["10:00", "20:00"]],
+    "sun": [["10:00", "18:00"]]
+  },
+  "exceptions": [
+    { "date": "2026-12-31", "closed": false, "opens": "09:00", "closes": "15:00", "note": "Предпраздничный день" },
+    { "date": "2027-01-01", "closed": true, "note": "Новый год" }
+  ],
+  "resources": [
+    { "key": "wash-1", "type": "wash_bay", "name": "Моечный бокс" },
+    { "key": "bay-1", "type": "detail_bay", "name": "Бокс 1" },
+    { "key": "bay-2", "type": "detail_bay", "name": "Бокс 2" },
+    { "key": "ppf-1", "type": "ppf_booth", "name": "PPF-бокс" }
+  ],
+  "services": [
+    {
+      "slug": "detailing-wash",
+      "category": "detailing_wash",
+      "name": "Детейлинг-мойка",
+      "summary": "Трёхфазная мойка, чистка дисков, сушка без контакта",
+      "description": "Предварительная пена, ручная мойка по методу двух вёдер, очистка дисков и колёсных арок, сушка тёплым воздухом, обработка резины и пластика.",
+      "requirements": [],
+      "resourceType": "wash_bay",
+      "durationMin": 120,
+      "priceFrom": 3500,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 15,
+      "multiDay": false,
+      "variants": {
+        "suv": { "durationMin": 150, "priceFrom": 4500 },
+        "large_suv": { "durationMin": 180, "priceFrom": 5500 },
+        "van": { "durationMin": 180, "priceFrom": 5500 }
+      }
+    },
+    {
+      "slug": "interior-deep-clean",
+      "category": "interior_detailing",
+      "name": "Химчистка салона",
+      "summary": "Полная химчистка с демонтажем сидений по необходимости",
+      "description": "Потолок, сиденья, ковровое покрытие, багажник, пластик и кожа. Озонирование в конце работ. Итоговая цена зависит от степени загрязнения — фиксируем при приёмке.",
+      "requirements": ["Освободите салон и багажник от личных вещей"],
+      "resourceType": "detail_bay",
+      "durationMin": 360,
+      "priceFrom": 18000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": false,
+      "variants": {
+        "suv": { "durationMin": 420, "priceFrom": 22000 },
+        "large_suv": { "durationMin": 480, "priceFrom": 26000 },
+        "van": { "durationMin": 480, "priceFrom": 26000 }
+      }
+    },
+    {
+      "slug": "leather-care",
+      "category": "leather_protection",
+      "name": "Уход и защита кожи",
+      "summary": "Очистка, питание и защитное покрытие кожаного салона",
+      "description": "Деликатная очистка пор кожи, кондиционер и защитное покрытие от истирания и перекрашивания от джинсовой ткани.",
+      "requirements": [],
+      "resourceType": "detail_bay",
+      "durationMin": 180,
+      "priceFrom": 9000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 15,
+      "multiDay": false,
+      "variants": { "large_suv": { "durationMin": 240, "priceFrom": 12000 } }
+    },
+    {
+      "slug": "paint-correction-2step",
+      "category": "paint_correction",
+      "name": "Полировка кузова в 2 этапа",
+      "summary": "Удаление голограмм и до 80% царапин, глубокий блеск",
+      "description": "Замер толщины ЛКП по всем элементам, абразивная и финишная полировка, обезжиривание. Автомобиль остаётся в боксе до завершения работ.",
+      "requirements": ["Не мыть автомобиль перед визитом — мойка входит в подготовку"],
+      "resourceType": "detail_bay",
+      "durationMin": 1200,
+      "priceFrom": 35000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": true,
+      "variants": {
+        "suv": { "durationMin": 1440, "priceFrom": 42000 },
+        "large_suv": { "durationMin": 1680, "priceFrom": 52000 }
+      }
+    },
+    {
+      "slug": "ceramic-3-layers",
+      "category": "ceramic_coating",
+      "name": "Керамика 9H, 3 слоя",
+      "summary": "Лёгкая полировка + три слоя керамики, гарантия 3 года",
+      "description": "Подготовительная полировка, нанесение трёх слоёв кварцевого покрытия, ИК-сушка и выдержка в тёплом боксе. Время отверждения включено в срок.",
+      "requirements": ["Первая мойка после нанесения — не раньше чем через 14 дней"],
+      "resourceType": "detail_bay",
+      "durationMin": 1560,
+      "priceFrom": 65000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 60,
+      "multiDay": true,
+      "requiresConfirmation": true,
+      "variants": {
+        "suv": { "durationMin": 1800, "priceFrom": 78000 },
+        "large_suv": { "durationMin": 2100, "priceFrom": 92000 }
+      }
+    },
+    {
+      "slug": "ppf-front",
+      "category": "ppf",
+      "name": "Полиуретановая плёнка — полный перед",
+      "summary": "Капот, бампер, крылья, фары и зеркала",
+      "description": "Лекала под конкретную модель, заворот кромок, прогрев. Плёнка с самозатягиванием мелких царапин.",
+      "requirements": ["Сколы на капоте лучше подкрасить заранее — обсудим при осмотре"],
+      "resourceType": "ppf_booth",
+      "durationMin": 1440,
+      "priceFrom": 85000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 60,
+      "multiDay": true,
+      "requiresConfirmation": true,
+      "variants": { "suv": { "durationMin": 1680, "priceFrom": 98000 } }
+    },
+    {
+      "slug": "pre-sale",
+      "category": "pre_sale_preparation",
+      "name": "Предпродажная подготовка",
+      "summary": "Мойка, лёгкая полировка, салон и моторный отсек",
+      "description": "Комплекс, который поднимает цену объявления: кузов, салон, двигатель, фото-готовность к вечеру того же дня.",
+      "requirements": [],
+      "resourceType": "detail_bay",
+      "durationMin": 480,
+      "priceFrom": 15000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": false,
+      "variants": { "suv": { "durationMin": 540, "priceFrom": 18000 } }
+    }
+  ],
+  "owners": [{ "email": "owner@graphite-detailing.test", "role": "owner" }],
+  "ai": { "enabled": true }
+}

@@ -7,8 +7,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @detailflow/web dev",
-    "build": "pnpm --filter @detailflow/web build",
+    "dev": "pnpm tenant:assets && pnpm --filter @detailflow/web dev",
+    "build": "pnpm tenant:assets && pnpm --filter @detailflow/web build",
     "typecheck": "tsc -p packages/domain && tsc -p packages/config && tsc -p apps/web && tsc -p tests",
     "lint": "eslint .",
     "test": "vitest run --project unit",
@@ -17,9 +17,15 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "stack": "scripts/local/stack.sh",
     "db:migrate": "tsx scripts/db/migrate.ts",
-    "db:reset": "scripts/local/stack.sh reset && tsx scripts/db/migrate.ts"
+    "db:reset": "scripts/local/stack.sh reset && tsx scripts/db/migrate.ts",
+    "tenant:seed": "tsx scripts/tenant/seed.ts",
+    "tenant:assets": "tsx scripts/tenant/sync-assets.ts",
+    "tenant:schema": "tsx scripts/tenant/schema.ts",
+    "tenant:demo-art": "tsx scripts/tenant/demo-art.ts"
   },
   "devDependencies": {
+    "@detailflow/config": "workspace:*",
+    "@detailflow/domain": "workspace:*",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.56.1",
     "@types/node": "26.6.3",
@@ -32,6 +38,7 @@
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.0",
-    "vitest": "5.0.3"
+    "vitest": "5.0.3",
+    "zod": "4.6.5"
   }
 }

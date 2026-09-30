@@ -1,0 +1,595 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "demo",
+        "active"
+      ]
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 3
+    },
+    "currency": {
+      "type": "string",
+      "const": "RUB"
+    },
+    "locale": {
+      "type": "string",
+      "const": "ru-RU"
+    },
+    "branding": {
+      "type": "object",
+      "properties": {
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9a-f]{6}$"
+        },
+        "logo": {
+          "type": "string",
+          "pattern": "^assets\\/[a-z0-9._-]+\\.(svg|jpg|jpeg|png|webp)$"
+        },
+        "hero": {
+          "type": "string",
+          "pattern": "^assets\\/[a-z0-9._-]+\\.(svg|jpg|jpeg|png|webp)$"
+        },
+        "tagline": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "about": {
+          "type": "string",
+          "maxLength": 1200
+        },
+        "gallery": {
+          "maxItems": 12,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "src": {
+                "type": "string",
+                "pattern": "^assets\\/[a-z0-9._-]+\\.(svg|jpg|jpeg|png|webp)$"
+              },
+              "caption": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "src",
+              "caption"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "demoArtwork": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "accent",
+        "hero",
+        "tagline",
+        "about",
+        "gallery",
+        "demoArtwork"
+      ],
+      "additionalProperties": false
+    },
+    "contacts": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "mapUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "phoneDisplay": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "phone": {
+          "type": "string",
+          "pattern": "^\\+[1-9]\\d{7,14}$"
+        },
+        "telegramUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "whatsappUrl": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "address"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "slotStepMin": {
+          "anyOf": [
+            {
+              "type": "number",
+              "const": 15
+            },
+            {
+              "type": "number",
+              "const": 30
+            },
+            {
+              "type": "number",
+              "const": 60
+            }
+          ]
+        },
+        "minNoticeMin": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10080
+        },
+        "horizonDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 365
+        },
+        "cancelCutoffHours": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 336
+        },
+        "requiresConfirmation": {
+          "type": "boolean"
+        },
+        "maxActiveBookingsPerPhone": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        }
+      },
+      "required": [
+        "slotStepMin",
+        "minNoticeMin",
+        "horizonDays",
+        "cancelCutoffHours",
+        "requiresConfirmation",
+        "maxActiveBookingsPerPhone"
+      ],
+      "additionalProperties": false
+    },
+    "hours": {
+      "type": "object",
+      "properties": {
+        "mon": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "tue": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "wed": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "thu": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "fri": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "sat": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "sun": {
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              },
+              {
+                "type": "string",
+                "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      },
+      "required": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun"
+      ],
+      "additionalProperties": false
+    },
+    "exceptions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "closed": {
+            "type": "boolean"
+          },
+          "opens": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "closes": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "date",
+          "closed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resources": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,38}$"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "wash_bay",
+              "detail_bay",
+              "ppf_booth",
+              "paint_booth",
+              "interior_station"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        },
+        "required": [
+          "key",
+          "type",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "services": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,58}[a-z0-9]$"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "detailing_wash",
+              "paint_correction",
+              "ceramic_coating",
+              "ppf",
+              "interior_detailing",
+              "leather_protection",
+              "pre_sale_preparation"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "summary": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "requirements": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          "resourceType": {
+            "type": "string",
+            "enum": [
+              "wash_bay",
+              "detail_bay",
+              "ppf_booth",
+              "paint_booth",
+              "interior_station"
+            ]
+          },
+          "durationMin": {
+            "type": "integer",
+            "minimum": 15,
+            "maximum": 14400
+          },
+          "priceFrom": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000000
+          },
+          "bufferBeforeMin": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240
+          },
+          "bufferAfterMin": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240
+          },
+          "multiDay": {
+            "type": "boolean"
+          },
+          "requiresConfirmation": {
+            "type": "boolean"
+          },
+          "variants": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "sedan",
+                "suv",
+                "large_suv",
+                "van",
+                "other"
+              ]
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "durationMin": {
+                  "type": "integer",
+                  "minimum": 15,
+                  "maximum": 14400
+                },
+                "priceFrom": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 10000000
+                }
+              },
+              "required": [
+                "durationMin",
+                "priceFrom"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "slug",
+          "category",
+          "name",
+          "summary",
+          "description",
+          "requirements",
+          "resourceType",
+          "durationMin",
+          "priceFrom",
+          "bufferBeforeMin",
+          "bufferAfterMin",
+          "multiDay",
+          "variants"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "owners": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "owner",
+              "manager",
+              "staff"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "slug",
+    "name",
+    "status",
+    "timezone",
+    "currency",
+    "locale",
+    "branding",
+    "contacts",
+    "policy",
+    "hours",
+    "exceptions",
+    "resources",
+    "services",
+    "owners",
+    "ai"
+  ],
+  "additionalProperties": false
+}

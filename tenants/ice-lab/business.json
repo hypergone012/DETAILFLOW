@@ -1,0 +1,110 @@
+{
+  "$schema": "../business.schema.json",
+  "slug": "ice-lab",
+  "name": "ICE LAB",
+  "status": "demo",
+  "timezone": "Asia/Yekaterinburg",
+  "currency": "RUB",
+  "locale": "ru-RU",
+  "branding": {
+    "accent": "#5ec8e5",
+    "logo": "assets/logo.svg",
+    "hero": "assets/hero.svg",
+    "tagline": "Салон как новый. Химчистка и подготовка к продаже в Екатеринбурге.",
+    "about": "Небольшая лаборатория ухода за салоном: одна моечная линия и отдельный чистый пост для химчистки. Работаем по записи, со вторника по субботу.",
+    "gallery": [],
+    "demoArtwork": true
+  },
+  "contacts": {
+    "address": "Екатеринбург, ул. Шефская, 2 (демо-адрес)",
+    "phoneDisplay": "+7 343 765-43-21",
+    "phone": "+73437654321",
+    "whatsappUrl": "https://wa.me/73437654321"
+  },
+  "policy": {
+    "slotStepMin": 60,
+    "minNoticeMin": 1440,
+    "horizonDays": 21,
+    "cancelCutoffHours": 12,
+    "requiresConfirmation": true,
+    "maxActiveBookingsPerPhone": 2
+  },
+  "hours": {
+    "mon": [],
+    "tue": [["10:00", "14:00"], ["15:00", "19:00"]],
+    "wed": [["10:00", "14:00"], ["15:00", "19:00"]],
+    "thu": [["10:00", "14:00"], ["15:00", "19:00"]],
+    "fri": [["10:00", "14:00"], ["15:00", "19:00"]],
+    "sat": [["10:00", "16:00"]],
+    "sun": []
+  },
+  "exceptions": [],
+  "resources": [
+    { "key": "wash-line", "type": "wash_bay", "name": "Моечная линия" },
+    { "key": "clean-room", "type": "interior_station", "name": "Чистый пост" }
+  ],
+  "services": [
+    {
+      "slug": "express-detail",
+      "category": "detailing_wash",
+      "name": "Экспресс-детейлинг",
+      "summary": "Кузов, диски, стёкла и быстрая уборка салона",
+      "description": "Бесконтактная пена, ручная мойка, сушка, пылесос салона и протирка пластика.",
+      "requirements": [],
+      "resourceType": "wash_bay",
+      "durationMin": 90,
+      "priceFrom": 2500,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": false,
+      "variants": { "suv": { "durationMin": 120, "priceFrom": 3200 } }
+    },
+    {
+      "slug": "interior-premium",
+      "category": "interior_detailing",
+      "name": "Химчистка салона Premium",
+      "summary": "Экстракторная чистка, пар, озонирование",
+      "description": "Все поверхности салона и багажника, экстрактор для тканей, пар для швов и дефлекторов.",
+      "requirements": ["Заберите детские кресла, если они не нуждаются в чистке"],
+      "resourceType": "interior_station",
+      "durationMin": 180,
+      "priceFrom": 12000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 30,
+      "multiDay": false,
+      "variants": { "suv": { "durationMin": 240, "priceFrom": 15000 } }
+    },
+    {
+      "slug": "leather-restore",
+      "category": "leather_protection",
+      "name": "Кожа: чистка и защита",
+      "summary": "Для сидений, руля и подлокотников",
+      "description": "Очистка, увлажнение и защитный состав с матовым финишем.",
+      "requirements": [],
+      "resourceType": "interior_station",
+      "durationMin": 120,
+      "priceFrom": 6000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 0,
+      "multiDay": false,
+      "variants": {}
+    },
+    {
+      "slug": "pre-sale-full",
+      "category": "pre_sale_preparation",
+      "name": "Подготовка к продаже",
+      "summary": "Салон, кузов и моторный отсек. Автомобиль остаётся у нас",
+      "description": "Полный цикл за два рабочих дня: химчистка, мойка двигателя, восстановление пластика.",
+      "requirements": [],
+      "resourceType": "interior_station",
+      "durationMin": 720,
+      "priceFrom": 14000,
+      "bufferBeforeMin": 0,
+      "bufferAfterMin": 0,
+      "multiDay": true,
+      "variants": {}
+    }
+  ],
+  "owners": [{ "email": "owner@icelab-detailing.test", "role": "owner" }],
+  "ai": { "enabled": false }
+}

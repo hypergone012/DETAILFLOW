@@ -35,8 +35,8 @@ export function BookingsPage() {
       {list.isPending && <Skeleton className="mt-4 h-64" />}
       {list.isError && <p className="mt-4 text-danger">{errorMessage(list.error)}</p>}
       {list.data && (
-        list.data.bookings.length === 0 ? <p className="mt-6 text-sm text-muted-foreground">Ничего не найдено</p> : (
-          <div className="mt-4 overflow-x-auto rounded-md border border-line">
+        list.data.bookings.length === 0 ? <p className="mt-6 text-sm text-muted-foreground" aria-busy={list.isFetching}>Ничего не найдено</p> : (
+          <div className="mt-4 overflow-x-auto rounded-md border border-line" aria-busy={list.isFetching}>
             <table className="w-full min-w-[720px] text-sm">
               <thead className="bg-surface-1 text-left font-mono text-[10px] tracking-[0.12em] text-muted-foreground uppercase">
                 <tr>

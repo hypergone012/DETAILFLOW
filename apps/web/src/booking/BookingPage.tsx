@@ -1,4 +1,5 @@
 import {
+  API_ERROR_MESSAGES,
   CATEGORY_LABELS,
   SERVICE_CATEGORIES,
   VEHICLE_CLASSES,
@@ -129,7 +130,8 @@ export function BookingPage() {
     onError: (err) => {
       if (err instanceof ApiError && ['SLOT_TAKEN', 'SLOT_NOT_OFFERED', 'OUTSIDE_BOOKING_WINDOW'].includes(err.code)) {
         update({ slot: null })
-        setNotice(err.message)
+        // The slot vanished between viewing and submitting: say so plainly.
+        setNotice(API_ERROR_MESSAGES.SLOT_TAKEN!)
         setStep('time')
         void queryClient.invalidateQueries({ queryKey: ['availability', slug] })
       }

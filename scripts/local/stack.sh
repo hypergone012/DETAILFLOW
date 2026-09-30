@@ -26,6 +26,7 @@ as_pg() {
 }
 
 psql_local() {
+  PGOPTIONS="-c client_min_messages=warning" \
   psql -h 127.0.0.1 -p "$PGPORT" -U postgres -v ON_ERROR_STOP=1 -q "$@"
 }
 
@@ -125,7 +126,10 @@ case "${1:-}" in
   status)
     as_pg "$PGBIN/pg_ctl" -D "$PGDATA" status | head -1
     curl -fsS "http://127.0.0.1:$AUTH_PORT/health" && echo ;;
-  reset) start_pg; create_db postgres_df ;;
+  reset)
+    # GoTrue holds connections to postgres_df: stop it, recreate, restart.
+    if [ -f "$LOCAL/gotrue.pid" ]; then kill "$(cat "$LOCAL/gotrue.pid")" 2>/dev/null || true; rm -f "$LOCAL/gotrue.pid"; sleep 0.5; fi
+    start_pg; create_db postgres_df; start_auth ;;
   createdb) start_pg; create_db "${2:?db name}" ;;
   psql) shift; psql_local -d postgres_df "$@" ;;
   *) echo "usage: $0 <build-auth|init|start|stop|status|reset|createdb NAME|psql>" >&2; exit 2 ;;

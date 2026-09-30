@@ -24,6 +24,13 @@ const dateParam = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 const rangeSchema = z.strictObject({ from: dateParam, to: dateParam })
 const uuid = z.uuid()
 
+/** Search terms. The phone clause only applies with ≥ 4 digits, otherwise '%%' would match everyone. */
+function searchTerms(raw: string | null): { text: string; digits: string | null; plate: string } {
+  const text = (raw ?? '').trim().slice(0, 60)
+  const digits = text.replace(/\D/g, '')
+  return { text, digits: digits.length >= 4 ? digits : null, plate: text.replace(/\s/g, '') }
+}
+
 /**
  * Owner dashboard API. Every query runs as role `authenticated` with the
  * caller's verified JWT claims, so Postgres RLS decides what is visible.
@@ -116,7 +123,7 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
     // GET /:slug/bookings?status=&q=
     if (req.method === 'GET' && resource === 'bookings' && !rid) {
       const status = url.searchParams.get('status')
-      const q = (url.searchParams.get('q') ?? '').trim().slice(0, 60)
+      const q = searchTerms(url.searchParams.get('q'))
       const rows = await asUser(claims, (tx) => tx`
         select ${BOOKING_LIST_COLUMNS(tx)}
         from public.bookings b
@@ -124,9 +131,9 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
         left join public.resources r on r.id = a.resource_id
         where b.tenant_id = ${tenant.id}
           ${status ? tx`and b.status = ${status}::public.booking_status` : tx``}
-          ${q ? tx`and (b.ref_code ilike ${'%' + q + '%'} or b.contact_name ilike ${'%' + q + '%'}
-                        or b.contact_phone_e164 like ${'%' + q.replace(/\D/g, '') + '%'}
-                        or b.vehicle_snapshot->>'plate' ilike ${'%' + q.replace(/\s/g, '') + '%'})` : tx``}
+          ${q.text ? tx`and (b.ref_code ilike ${'%' + q.text + '%'} or b.contact_name ilike ${'%' + q.text + '%'}
+                        ${q.digits ? tx`or b.contact_phone_e164 like ${'%' + q.digits + '%'}` : tx``}
+                        or b.vehicle_snapshot->>'plate' ilike ${'%' + q.plate + '%'})` : tx``}
         order by b.start_at desc limit 200`)
       return json({ bookings: rows })
     }
@@ -195,7 +202,7 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
 
     // GET /:slug/customers?q=
     if (req.method === 'GET' && resource === 'customers' && !rid) {
-      const q = (url.searchParams.get('q') ?? '').trim().slice(0, 60)
+      const q = searchTerms(url.searchParams.get('q'))
       const rows = await asUser(claims, (tx) => tx`
         select c.id, c.name, c.phone_e164, c.email, c.created_at,
                (select count(*)::int from public.bookings b where b.customer_id = c.id) as bookings,
@@ -203,8 +210,9 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
                (select string_agg(v.make || ' ' || v.model, ', ') from public.vehicles v where v.customer_id = c.id) as vehicles
         from public.customers c
         where c.tenant_id = ${tenant.id}
-          ${q ? tx`and (c.name ilike ${'%' + q + '%'} or c.phone_e164 like ${'%' + q.replace(/\D/g, '') + '%'}
-                        or exists (select 1 from public.vehicles v where v.customer_id = c.id and v.plate ilike ${'%' + q.replace(/\s/g, '') + '%'}))` : tx``}
+          ${q.text ? tx`and (c.name ilike ${'%' + q.text + '%'}
+                        ${q.digits ? tx`or c.phone_e164 like ${'%' + q.digits + '%'}` : tx``}
+                        or exists (select 1 from public.vehicles v where v.customer_id = c.id and v.plate ilike ${'%' + q.plate + '%'}))` : tx``}
         order by last_visit desc nulls last limit 200`)
       return json({ customers: rows })
     }

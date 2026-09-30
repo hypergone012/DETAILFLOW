@@ -22,7 +22,7 @@
   --surface-3: #20242a;
   --foreground: #e8eaed;
   --muted-foreground: #9aa0a6;
-  --faint-foreground: #6b7178;
+  --faint-foreground: #858b93; /* ≥ 4.5:1 on every surface */
   --line: rgb(255 255 255 / 0.08);
   --line-strong: rgb(255 255 255 / 0.16);
 

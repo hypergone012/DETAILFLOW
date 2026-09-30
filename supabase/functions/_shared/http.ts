@@ -87,11 +87,15 @@ export function routeSegments(req: Request, functionName: string): string[] {
   return i >= 0 ? parts.slice(i + 1) : parts
 }
 
+/**
+ * Client IP for rate limiting. Proxies append to X-Forwarded-For, so its left
+ * part is client-controlled: only the rightmost entry (added by the closest
+ * trusted proxy) is used. Cloudflare's header cannot be set by clients.
+ */
 export function clientIp(req: Request): string {
-  return (
-    req.headers.get('cf-connecting-ip') ??
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown'
-  )
+  const cf = req.headers.get('cf-connecting-ip')
+  if (cf) return cf.trim()
+  const xff = req.headers.get('x-forwarded-for')?.split(',').map((s) => s.trim()).filter(Boolean)
+  if (xff?.length) return xff[xff.length - 1]!
+  return req.headers.get('x-real-ip')?.trim() ?? 'unknown'
 }

@@ -64,7 +64,7 @@ export function HomePage() {
 
       {profile.gallery.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 pb-10" aria-label="Работы">
-          <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4">
+          <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4" tabIndex={0} role="region" aria-label="Галерея работ">
             {profile.gallery.map((g) => (
               <figure key={g.url} className="w-[78%] shrink-0 snap-start sm:w-[420px]">
                 <img src={g.url} alt={g.caption ?? ''} className="aspect-[4/3] w-full rounded-md border border-line object-cover" loading="lazy" />

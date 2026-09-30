@@ -17,6 +17,8 @@ export interface PublicApiDeps {
   sql: Sql
   cors: CorsConfig
   manageTokenSecret: string
+  /** Booking attempts per client IP per 10 minutes (default 10). */
+  bookingsPerIpPer10Min?: number
   now?: () => Date
   log?: (msg: string, extra?: Record<string, unknown>) => void
 }
@@ -90,7 +92,7 @@ export function createPublicApi(deps: PublicApiDeps): (req: Request) => Promise<
 
     // POST /bookings/:slug
     if (req.method === 'POST' && seg[0] === 'bookings' && seg.length === 2) {
-      await rateLimit(`book:${ipKey}`, 600, 10)
+      await rateLimit(`book:${ipKey}`, 600, deps.bookingsPerIpPer10Min ?? 10)
       const tenant = await tenantBySlug(seg[1]!)
       if (tenant.status === 'suspended') throw new HttpError(403, 'TENANT_UNAVAILABLE')
       const body = await readJson(req, createBookingRequestSchema)

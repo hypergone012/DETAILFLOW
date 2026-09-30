@@ -26,6 +26,7 @@
     "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/public-api/index.ts supabase/functions/owner-api/index.ts supabase/functions/_dev/gateway.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@detailflow/config": "workspace:*",
     "@detailflow/domain": "workspace:*",
     "@eslint/js": "10.0.1",

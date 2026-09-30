@@ -146,6 +146,15 @@ describe('booking operations', () => {
     await call(owner, 'DELETE', `/owner-api/ice-lab/blocks/${block.body.id}`, { token: iceToken })
   })
 
+  it('search by booking ref returns exactly that booking (regression: empty digit filter matched everyone)', async () => {
+    const a = await bookSomething('graphite', 'detailing-wash')
+    await bookSomething('graphite', 'detailing-wash')
+    const r = await call(owner, 'GET', `/owner-api/graphite/bookings?q=${a.ref}`, { token: graphiteToken })
+    expect(r.body.bookings.map((b: { ref_code: string }) => b.ref_code)).toEqual([a.ref])
+    const letters = await call(owner, 'GET', '/owner-api/graphite/customers?q=zzzz', { token: graphiteToken })
+    expect(letters.body.customers).toEqual([])
+  })
+
   it('customer notes are editable only within the own studio', async () => {
     const b = await bookSomething('graphite', 'detailing-wash')
     const detail = await call(owner, 'GET', `/owner-api/graphite/bookings/${b.id}`, { token: graphiteToken })

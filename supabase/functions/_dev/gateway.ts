@@ -14,7 +14,12 @@ const cors = { allowedOrigins: env('DF_ALLOWED_ORIGINS', 'http://127.0.0.1:5173,
 const authUpstream = env('DF_AUTH_UPSTREAM', 'http://127.0.0.1:54324')
 
 const functions: Record<string, (req: Request) => Promise<Response>> = {
-  'public-api': createPublicApi({ sql, cors, manageTokenSecret: env('DF_MANAGE_TOKEN_SECRET', 'local-manage-token-secret-change-me') }),
+  'public-api': createPublicApi({
+    sql,
+    cors,
+    manageTokenSecret: env('DF_MANAGE_TOKEN_SECRET', 'local-manage-token-secret-change-me'),
+    bookingsPerIpPer10Min: Number(env('DF_BOOKING_RATE_LIMIT', '10')),
+  }),
   'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long') } }),
 }
 

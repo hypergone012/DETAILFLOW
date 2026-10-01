@@ -19,7 +19,11 @@ begin
 end
 $$;
 
-alter role df_edge noinherit nosuperuser nocreatedb nocreaterole nobypassrls;
+-- Only NOINHERIT is set explicitly: a role created by a non-superuser never has
+-- SUPERUSER/BYPASSRLS/CREATEROLE/CREATEDB, and Supabase (supautils) rejects any
+-- ALTER ROLE that names those attributes. Functions refuse to start if the role
+-- has them anyway (assertLeastPrivilegeRole), and prod:verify-db checks it.
+alter role df_edge noinherit;
 grant authenticated, service_role to df_edge;
 -- Same session settings PostgREST relies on; statement_timeout caps runaway queries.
 alter role df_edge set statement_timeout = '8s';

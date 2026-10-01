@@ -2,17 +2,25 @@
 project_id = "detailflow"
 
 [functions.public-api]
+# Shared import map (bare specifiers -> npm: and the vendored domain code); path relative to supabase/.
+import_map = "./functions/deno.json"
 # Public, account-less API: authorisation is the slug + manage token, not a JWT.
 verify_jwt = false
 
 [functions.owner-api]
+# Shared import map (bare specifiers -> npm: and the vendored domain code); path relative to supabase/.
+import_map = "./functions/deno.json"
 # The handler verifies the Supabase Auth JWT itself (JWKS) and runs queries under RLS.
 verify_jwt = false
 
 [functions.notify-dispatcher]
+# Shared import map (bare specifiers -> npm: and the vendored domain code); path relative to supabase/.
+import_map = "./functions/deno.json"
 # Called by the scheduler with the x-dispatcher-secret header, not by browsers.
 verify_jwt = false
 
 [functions.assistant]
+# Shared import map (bare specifiers -> npm: and the vendored domain code); path relative to supabase/.
+import_map = "./functions/deno.json"
 # Public, tenant-bound, read-only tools; rate-limited per IP and per session.
 verify_jwt = false

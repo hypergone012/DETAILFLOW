@@ -58,6 +58,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - run: scripts/local/stack.sh init && scripts/local/stack.sh start
+      # Playwright starts the function gateway before globalSetup: the gateway refuses to run
+      # without the least-privilege role and is "ready" only once a studio exists.
+      - run: scripts/local/e2e-prepare.sh
       - run: pnpm test:e2e
       - run: pnpm test:pages
       - uses: actions/upload-artifact@v4

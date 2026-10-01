@@ -49,3 +49,14 @@ export async function createUser(email: string, password: string): Promise<Admin
   const user = (await res.json()) as AdminUser
   return { id: user.id, email: user.email }
 }
+
+/** Sets the password of an existing user (production re-deploys keep the owner password in sync with the secret). */
+export async function setPassword(userId: string, password: string): Promise<void> {
+  const key = await serviceRoleKey()
+  const res = await fetch(`${env('AUTH_URL', LOCAL.authUrl)}/admin/users/${userId}`, {
+    method: 'PUT',
+    headers: adminHeaders(key),
+    body: JSON.stringify({ password }),
+  })
+  if (!res.ok) throw new Error(`gotrue ${res.status}: ${await res.text()}`)
+}

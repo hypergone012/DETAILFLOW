@@ -12,7 +12,7 @@ import postgres from 'postgres'
 import type { Business } from '@detailflow/config'
 import { rubToMinor } from '@detailflow/domain'
 import { LOCAL, env } from '../lib/env.ts'
-import { createUser } from '../lib/gotrue.ts'
+import { createUser, setPassword } from '../lib/gotrue.ts'
 import { assetUrl, loadTenant, tenantSlugs } from './load.ts'
 
 const ISO_DAY = { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6, sun: 7 } as const
@@ -96,11 +96,17 @@ export async function seedTenant(sql: postgres.Sql, b: Business, statusOverride?
   })
 }
 
-export async function ensureMembers(sql: postgres.Sql, tenantId: string, b: Business, password: string): Promise<void> {
+/** DF_OWNER_PASSWORD_<SLUG> (e.g. DF_OWNER_PASSWORD_ICE_LAB) overrides the shared demo password per studio. */
+export function ownerPassword(slug: string, fallback: string): string {
+  return process.env[`DF_OWNER_PASSWORD_${slug.toUpperCase().replace(/-/g, '_')}`] || fallback
+}
+
+export async function ensureMembers(sql: postgres.Sql, tenantId: string, b: Business, password: string, syncPassword = false): Promise<void> {
   for (const o of b.owners) {
-    await createUser(o.email, password)
+    const created = await createUser(o.email, password)
     const [u] = await sql<{ id: string }[]>`select id from auth.users where email = ${o.email}`
     if (!u) throw new Error(`auth user ${o.email} not found after creation`)
+    if (!created && syncPassword) await setPassword(u.id, password)
     await sql`insert into public.tenant_members (tenant_id, user_id, role) values (${tenantId}, ${u.id}, ${o.role})
               on conflict (tenant_id, user_id) do update set role = excluded.role`
   }
@@ -110,7 +116,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2)
   const statusIdx = args.indexOf('--status')
   const status = statusIdx >= 0 ? (args[statusIdx + 1] as 'demo' | 'active') : undefined
-  const slugs = args.includes('--all') ? tenantSlugs() : args.filter((a, i) => !a.startsWith('--') && i !== statusIdx + 1)
+  const slugs = args.includes('--all') ? tenantSlugs() : args.filter((a, i) => !a.startsWith('--') && (statusIdx < 0 || i !== statusIdx + 1))
   if (slugs.length === 0) throw new Error('usage: seed.ts <slug...> | --all [--status demo|active]')
   const password = env('DF_DEMO_OWNER_PASSWORD', 'detailflow-demo')
   const sql = postgres(env('DATABASE_URL', LOCAL.databaseUrl), { max: 2, onnotice: () => {} })
@@ -119,7 +125,7 @@ async function main(): Promise<void> {
       const result = loadTenant(slug)
       if (!result.ok) throw new Error(`${slug}: invalid business.json\n  ${result.errors.join('\n  ')}`)
       const id = await seedTenant(sql, result.business!, status)
-      await ensureMembers(sql, id, result.business!, password)
+      await ensureMembers(sql, id, result.business!, ownerPassword(slug, password), process.env.DF_SYNC_OWNER_PASSWORDS === '1')
       console.log(`seeded ${slug} (${id}) owners: ${result.business!.owners.map((o) => o.email).join(', ')}`)
     }
   } finally {

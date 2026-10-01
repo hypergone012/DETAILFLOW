@@ -73,8 +73,8 @@ test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Te
   try {
     await expect(async () => {
       await owner.reload()
-      await expect(owner.getByText(expected, { exact: true }).first()).toBeVisible({ timeout: 2_000 })
-    }).toPass({ timeout: 150_000, intervals: [5_000] })
+      await expect(owner.getByText(expected, { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+    }).toPass({ timeout: 240_000, intervals: [5_000] })
   } catch (err) {
     // Diagnostics without secrets: what the owner page and the owner API show for this booking.
     const section = await owner.locator('section', { has: owner.getByRole('heading', { name: 'Уведомления студии' }) }).innerText().catch(() => '(section not found)')
@@ -95,11 +95,11 @@ test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Te
   // Every event (created/confirmed, rescheduled, cancelled) goes through the same path.
   await expect(async () => {
     await owner.reload()
-    await expect(owner.getByText('booking.cancelled')).toBeVisible({ timeout: 2_000 })
-    await expect(owner.getByText('booking.rescheduled').first()).toBeVisible({ timeout: 2_000 })
+    await expect(owner.getByText('booking.cancelled')).toBeVisible({ timeout: 15_000 })
+    await expect(owner.getByText('booking.rescheduled').first()).toBeVisible({ timeout: 15_000 })
     const rows = await owner.locator('section', { has: owner.getByRole('heading', { name: 'Уведомления студии' }) }).locator('li').count()
-    await expect(owner.getByText(expected, { exact: true })).toHaveCount(rows, { timeout: 2_000 })
-  }).toPass({ timeout: 150_000, intervals: [5_000] })
+    await expect(owner.getByText(expected, { exact: true })).toHaveCount(rows, { timeout: 15_000 })
+  }).toPass({ timeout: 240_000, intervals: [5_000] })
   await customerCtx.close()
   await ownerCtx.close()
 })

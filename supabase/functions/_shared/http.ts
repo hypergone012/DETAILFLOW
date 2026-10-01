@@ -121,19 +121,34 @@ export interface ClientIpConfig {
    * right; everything further left is client-controlled and ignored.
    */
   trustedProxyHops: number
+  /**
+   * Header set (and overwritten) by the platform's edge, e.g. cf-connecting-ip
+   * when every request passes Cloudflare. Only configured after
+   * scripts/prod/client-ip-check.ts proved a client cannot forge it.
+   */
+  header?: string | null
 }
 
-let ipConfig: ClientIpConfig = { trustedProxyHops: 1 }
+let ipConfig: ClientIpConfig = { trustedProxyHops: 1, header: null }
 export function configureClientIp(cfg: ClientIpConfig): void {
-  ipConfig = { trustedProxyHops: Math.max(1, Math.floor(cfg.trustedProxyHops)) }
+  const header = cfg.header?.trim().toLowerCase()
+  ipConfig = {
+    trustedProxyHops: Math.max(1, Math.floor(Number.isFinite(cfg.trustedProxyHops) ? cfg.trustedProxyHops : 1)),
+    header: header && header !== 'none' ? header : null,
+  }
 }
 
 /**
  * Client IP for rate limiting. Headers a client can set freely
  * (cf-connecting-ip, x-real-ip, the left part of X-Forwarded-For) are not
- * trusted: a spoofed value must never let a client pick its own bucket.
+ * trusted unless explicitly configured as platform-set: a spoofed value must
+ * never let a client pick its own bucket.
  */
 export function clientIp(req: Request): string {
+  if (ipConfig.header) {
+    const v = req.headers.get(ipConfig.header)?.split(',')[0]?.trim()
+    if (v) return v
+  }
   const xff = req.headers.get('x-forwarded-for')?.split(',').map((s) => s.trim()).filter(Boolean)
   if (!xff?.length) return 'unknown'
   return xff[Math.max(0, xff.length - ipConfig.trustedProxyHops)]!

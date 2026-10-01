@@ -114,15 +114,19 @@ jobs:
         id: verify
         run: pnpm prod:verify-db
 
+      - name: Client IP behind the platform proxies (rate limits; tunes DF_TRUSTED_PROXY_HOPS / DF_CLIENT_IP_HEADER)
+        if: ${{ !cancelled() && steps.functions.outcome == 'success' }}
+        run: pnpm -s tsx scripts/prod/client-ip-check.ts --tune
+
+      - name: Notification dispatcher answers on schedule
+        if: ${{ !cancelled() && steps.functions.outcome == 'success' }}
+        run: pnpm -s tsx scripts/prod/dispatcher-check.ts
+
       - run: pnpm exec playwright install --with-deps chromium
         if: ${{ !cancelled() && steps.pages.outcome == 'success' }}
       - name: Production smoke (GRAPHITE flow + ICE LAB isolation)
         if: ${{ !cancelled() && steps.pages.outcome == 'success' }}
         run: pnpm test:prod
-
-      - name: Client IP behind the platform proxies (rate limits)
-        if: ${{ !cancelled() && steps.functions.outcome == 'success' }}
-        run: pnpm -s tsx scripts/prod/client-ip-check.ts
 
       - name: New studio pipeline (new, validate, seed, invite, accept, activate, publish, cleanup)
         if: ${{ !cancelled() && steps.pages.outcome == 'success' }}

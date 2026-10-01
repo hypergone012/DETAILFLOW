@@ -7,6 +7,14 @@ const req = (headers: Record<string, string>) => new Request('http://x/functions
 describe('clientIp', () => {
   afterEach(() => configureClientIp({ trustedProxyHops: 1 }))
 
+  it('uses a configured platform header first, falling back to X-Forwarded-For', () => {
+    configureClientIp({ trustedProxyHops: 1, header: 'CF-Connecting-IP' })
+    expect(clientIp(req({ 'cf-connecting-ip': '198.51.100.9', 'x-forwarded-for': '6.6.6.6, 10.0.0.1' }))).toBe('198.51.100.9')
+    expect(clientIp(req({ 'x-forwarded-for': '6.6.6.6, 10.0.0.1' }))).toBe('10.0.0.1')
+    configureClientIp({ trustedProxyHops: Number.NaN, header: 'none' })
+    expect(clientIp(req({ 'cf-connecting-ip': '198.51.100.9', 'x-forwarded-for': '203.0.113.7' }))).toBe('203.0.113.7')
+  })
+
   it('ignores the client-controlled left part of X-Forwarded-For', () => {
     expect(clientIp(req({ 'x-forwarded-for': '6.6.6.6, 203.0.113.7' }))).toBe('203.0.113.7')
   })
@@ -15,7 +23,7 @@ describe('clientIp', () => {
     expect(clientIp(req({ 'cf-connecting-ip': '6.6.6.6' }))).toBe('unknown')
   })
   it('supports several trusted proxy hops', () => {
-    configureClientIp({ trustedProxyHops: 2 })
+    configureClientIp({ trustedProxyHops: 2, header: 'none' })
     expect(clientIp(req({ 'x-forwarded-for': '6.6.6.6, 198.51.100.4, 10.0.0.1' }))).toBe('198.51.100.4')
   })
 })

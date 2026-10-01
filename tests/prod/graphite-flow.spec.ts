@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { apiHeaders, env, ownerLogin, requireEnv } from './env.ts'
+import { accessToken, apiHeaders, env, ownerLogin, requireEnv } from './env.ts'
 
 test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Telegram notification', async ({ browser, request }) => {
   requireEnv(['PROD_APP_URL', env.app], ['PROD_SUPABASE_URL', env.api], ['PROD_GRAPHITE_OWNER_EMAIL', env.graphite.email], ['PROD_GRAPHITE_OWNER_PASSWORD', env.graphite.password])
@@ -70,10 +70,21 @@ test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Te
 
   // Telegram: the dispatcher runs every minute. Live studio -> "отправлено"; demo -> suppressed.
   const expected = live ? 'отправлено' : 'не отправлено (демо)'
-  await expect(async () => {
-    await owner.reload()
-    await expect(owner.getByText(expected, { exact: true }).first()).toBeVisible({ timeout: 2_000 })
-  }).toPass({ timeout: 150_000, intervals: [5_000] })
+  try {
+    await expect(async () => {
+      await owner.reload()
+      await expect(owner.getByText(expected, { exact: true }).first()).toBeVisible({ timeout: 2_000 })
+    }).toPass({ timeout: 150_000, intervals: [5_000] })
+  } catch (err) {
+    // Diagnostics without secrets: what the owner page and the owner API show for this booking.
+    const section = await owner.locator('section', { has: owner.getByRole('heading', { name: 'Уведомления студии' }) }).innerText().catch(() => '(section not found)')
+    console.log(`[diag] url=${owner.url()}\n[diag] notifications section: ${section.replace(/\s+/g, ' ')}`)
+    const token = await accessToken(owner)
+    const id = owner.url().split('/').pop()
+    const detail = await request.get(`${env.api}/functions/v1/owner-api/graphite/bookings/${id}`, { headers: { ...apiHeaders(), authorization: `Bearer ${token}` } })
+    console.log(`[diag] owner-api ${detail.status()} notifications: ${JSON.stringify(((await detail.json().catch(() => ({}))) as { notifications?: unknown }).notifications ?? null)}`)
+    throw err
+  }
   if (live) await expect(owner.getByText('ошибка')).toHaveCount(0)
 
   // Cleanup: free the slot again

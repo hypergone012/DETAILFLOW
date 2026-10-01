@@ -115,8 +115,14 @@ async function ensureProject(): Promise<{ project: Project; dbPassword: string }
   if (given) {
     project = await supabase<Project>('GET', `/projects/${given}`)
   } else {
-    const all = await supabase<Project[]>('GET', '/projects')
-    project = all.find((p) => p.name === name)
+    const all = (await supabase<Project[]>('GET', '/projects')).filter((p) => p.status !== 'REMOVED')
+    console.log(`token sees ${all.length} Supabase project(s)`)
+    project = all.find((p) => p.name.toLowerCase() === name.toLowerCase())
+    // The operator may have created the project in the dashboard under another name: one project = that one.
+    if (!project && all.length === 1) project = all[0]
+    if (!project && all.length > 1) {
+      throw new Error(`several Supabase projects (${all.map((p) => p.name).join(', ')}): set the repository variable SUPABASE_PROJECT_REF to the one to use`)
+    }
   }
   if (!project) {
     type Org = { id: string; slug: string; name: string }

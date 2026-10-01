@@ -204,10 +204,13 @@ export function poolerUrls(p: { db_host: string; db_name: string }, ref: string,
 }
 
 async function ensurePagesProject(): Promise<{ accountId: string; project: string; url: string }> {
-  let accountId = process.env.CLOUDFLARE_ACCOUNT_ID
+  // CF_ACCOUNT_ID_SECRET: the repository secret CLOUDFLARE_ACCOUNT_ID (tokens limited to Pages cannot list accounts).
+  let accountId = process.env.CLOUDFLARE_ACCOUNT_ID || process.env.CF_ACCOUNT_ID_SECRET?.trim()
   if (!accountId) {
     const accounts = await cloudflare<Array<{ id: string; name: string }>>('GET', '/accounts')
-    if (accounts.length === 0) throw new Error('CLOUDFLARE_API_TOKEN has no account access (needs Account > Cloudflare Pages > Edit)')
+    if (accounts.length === 0) {
+      throw new Error('this Cloudflare token cannot list accounts: add the repository secret CLOUDFLARE_ACCOUNT_ID (dash.cloudflare.com, Account ID on the overview page)')
+    }
     accountId = accounts[0]!.id
   }
   const name = process.env.CF_PAGES_PROJECT || 'detailflow'

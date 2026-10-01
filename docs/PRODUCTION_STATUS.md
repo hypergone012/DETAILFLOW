@@ -4,37 +4,37 @@ Date: 2026-10-01. Branch: `claude/sleepy-dijkstra-kuo7qx`.
 
 ## Summary
 
-**No production deployment exists yet.** The execution environment used for this work has no production credentials and its network policy blocks every production host except the Anthropic API:
+**Production is deployed and verified end to end** by [Deploy production run 36812058239](https://github.com/hypergone012/DETAILFLOW/actions/runs/36812058239) (commit `d2b2521`, 2026-10-01 03:46–03:57 UTC, every step green).
 
-| Host | Result from this environment |
+| | |
 |---|---|
-| `api.supabase.com`, `*.supabase.co`, `supabase.com` | blocked (proxy 403 on CONNECT) |
-| `api.telegram.org` | blocked (proxy 403) |
-| `api.cloudflare.com`, `*.pages.dev` | blocked (proxy 403) |
-| `api.anthropic.com` | reachable, but no `ANTHROPIC_API_KEY` provided |
+| Public app (GRAPHITE) | https://detailflow.pages.dev/s/graphite/ |
+| Owner dashboard (GRAPHITE) | https://detailflow.pages.dev/s/graphite/owner/ |
+| Second studio (ICE LAB) | https://detailflow.pages.dev/s/ice-lab/ |
+| API | `https://kqzbtcrempmgpwtwrlgg.supabase.co` (Supabase, eu-west-1) |
+| Frontend | Cloudflare Pages project `detailflow` |
 
-Credentials present: none (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` all unset).
-
-**GitHub Actions path (2026-10-01).** The production workflow now provisions everything from three repository secrets (`docs/PRODUCTION.md` §0). Its first run, [Deploy production #1](https://github.com/hypergone012/DETAILFLOW/actions/runs/36796760080), stopped at the first step because the repository has none of them (`SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `DF_OWNER_PASSWORD`). Nothing was deployed. CI on GitHub is green for the first time ([CI #17](https://github.com/hypergone012/DETAILFLOW/actions/runs/36796755748)); every earlier run had failed in the e2e job (fixed, see below).
-
-Everything that can be proven without them was run against real components locally (PostgreSQL 16, Supabase Auth built from source, Edge Functions on Deno, the Cloudflare Pages runtime via wrangler/workerd, Chromium). Production steps are scripted and wired to fail or report **NOT VERIFIED** — never to simulate success.
+The deploy runs on GitHub Actions (`.github/workflows/deploy.yml`); this development environment itself cannot reach Supabase, Cloudflare or Telegram (network policy), so every production check below was executed by the workflow against the real services. Smoke results are uploaded as the `production-smoke` artifact of each run (only after a scan proved no secret value is inside).
 
 ## Status by area
 
-| # | Area | Status | Evidence |
+| # | Area | Status | Evidence (run 36812058239 unless noted) |
 |---|---|---|---|
-| 1 | Production Supabase project | **NOT VERIFIED** — not created from here | runbook §2 |
-| 2 | Production migrations | **NOT VERIFIED** on hosted; clean-apply verified locally | `scripts/db/migrate.ts` on a fresh DB each test run; `pnpm prod:verify-db` PASS locally (`docs/smoke/verify-db-local-rehearsal.json`) |
-| 3 | Production Auth | **NOT VERIFIED** on hosted; verified with Supabase Auth (GoTrue) built from source | E2E: invite → password → dashboard; login; logout revokes refresh token; signup disabled; API tests: expired / wrong issuer / anonymous / service_role / `alg: none` / tampered tokens → 401; wrong tenant → 404 |
-| 4 | Production Edge Functions | **NOT VERIFIED** deployed; handlers verified on Deno and under the production DB role | 131 DB/API tests run the handlers as `df_edge`; `deno check` of all entrypoints |
-| 5 | Production RLS | **NOT VERIFIED** on hosted; verified locally + read-only verifier ready | `tests/db/security.test.ts`, `isolation.test.ts`; `pnpm prod:verify-db` |
-| 6 | Production frontend | **NOT VERIFIED** on Cloudflare; production build verified on the Pages runtime locally | `pnpm test:pages` 5/5: SPA fallback, headers/CSP, no CSP violations or third-party requests through booking + owner login, SW + offline, per-studio manifests |
-| 7 | Telegram (tenant-scoped) | **NOT VERIFIED** live (no `TELEGRAM_BOT_TOKEN`, `api.telegram.org` blocked here, no deployment) | per-studio destination table + RLS + unique chat; 21 API/DB tests in `tests/api/telegram.test.ts` (GRAPHITE→GRAPHITE chat, ICE LAB→ICE LAB chat, chat takeover rejected, cross-studio settings rejected, demo = 0 calls, no token = not_configured, outage → retry → exactly one message, token leak scan) against a local Bot API contract server; E2E `tests/e2e/telegram-settings.spec.ts` (owner links chat, Connected, test message, ICE LAB cannot take the chat, demo booking sends nothing); live-check script rehearsed: `docs/smoke/telegram-check-local-rehearsal.json` (`rehearsal_passed`, not live) |
-| 8 | Claude API | **NOT VERIFIED** live | tool loop verified with a scripted model and real tools/DB; `pnpm prod:ai-smoke` → NOT VERIFIED (no key) |
-| 9 | Cloudflare deployment | **NOT VERIFIED** | `wrangler pages deploy` wired in `deploy.yml`; API blocked, no token |
-| 10 | Production smoke | **NOT VERIFIED** on production; **rehearsed 10/10** on the production build + Pages runtime + local backend | `docs/smoke/prod-e2e-local-rehearsal.json`: GRAPHITE booking → manage link → customer reschedule → owner login → owner reschedule → status → notifications → cancel; ICE LAB timezone/schedule/catalog/isolation; 360/390/768/1440 px; PWA (manifest, SW, offline shell, booking needs network). Live-Telegram branch rehearsed earlier: `docs/smoke/prod-e2e-local-rehearsal-live-branch.json` |
-| 11 | New studio pipeline | **NOT VERIFIED** on production; **13/13 steps** locally | `docs/smoke/tenant-pipeline-local-rehearsal.json`: new → validate → seed (draft = 404) → invite → accept + password → single-use link → login → owner API sees only this studio → activate refused on demo artwork → activate → public → cleanup |
-| 12 | Client IP behind the platform | **NOT VERIFIED** (needs the hosted gateway) | `scripts/prod/client-ip-check.ts`; locally it correctly reports a forged `X-Forwarded-For` as client-controlled (no proxy in front of the local gateway) |
+| 1 | Supabase project | **VERIFIED** | project `kqzbtcrempmgpwtwrlgg` found and healthy; API keys and pooler read through the Management API |
+| 2 | Migrations | **VERIFIED** | 6 migrations applied on hosted Postgres; first hosted run found that `ALTER ROLE … NOSUPERUSER NOBYPASSRLS` is rejected by Supabase (supautils) — fixed in `ce68b26` |
+| 3 | Auth | **VERIFIED** | signup disabled, anonymous users disabled, site URL / redirect allow-list set; GRAPHITE and ICE LAB owners log in; invite link → accept → password → login and single-use link checked by the pipeline check |
+| 4 | Edge Functions | **VERIFIED** | four functions deployed; run under the least-privilege `df_edge` role through the transaction pooler |
+| 5 | RLS / grants / invariants | **VERIFIED** | `prod:verify-db` PASS on the hosted DB (anon no grants, RLS on every table, `df_edge` without own rights, `private.*` closed, pinned search_path, composite FKs, exclusion constraint, idempotency key, tenant_id immutability, one Telegram chat per studio, no token column) |
+| 6 | Frontend on Cloudflare Pages | **VERIFIED** | `https://detailflow.pages.dev` serves the production build (https API enforced, bundle secret scan clean) |
+| 7 | Telegram (tenant-scoped) | **VERIFIED** via `api.telegram.org` | `prod:telegram-check`: bot `@detailingstudio_app_bot` accepted (getMe); GRAPHITE chat read from GRAPHITE's own settings row; server-side test message delivered to it; GRAPHITE (demo) booking suppressed with no Bot API call; booking.created (message 23) and booking.cancelled (message 24) delivered by the scheduled dispatcher to that chat through a throwaway active studio; ICE LAB booking never reached GRAPHITE's chat. Same result in runs 36808803417, 36809984690, 36810989552 |
+| 8 | Claude API | **NOT VERIFIED** | no `ANTHROPIC_API_KEY` secret; the assistant reports unavailable and booking works without it (fail-soft, tested) |
+| 9 | Production browser smoke | **VERIFIED 10/10** | GRAPHITE: fresh browser → booking → manage link → customer reschedule → owner login → owner finds it → owner reschedule → status change → every notification processed (`не отправлено (демо)`) → cancel; ICE LAB: own timezone/schedule/catalog, GRAPHITE unreachable via ICE LAB API/UI/owner API; 360/390/768/1440 px without horizontal scroll; owner dashboard on a phone; PWA manifest/scope/icons, service worker, offline studio shell, booking offline shows «Нет соединения» |
+| 10 | New studio pipeline | **VERIFIED 14/14** | new → validate → seed (draft not public) → invite → accept + password → link not reusable → login → owner API sees only this studio → other studio 404 → activate refused on template artwork → activate → public storefront → app page served → cleanup |
+| 11 | Client IP behind Supabase | **VERIFIED** (auto-tuned) | with the default (`DF_TRUSTED_PROXY_HOPS=1`) rate limits keyed on a proxy address shared by all customers (run 36808803417); `client-ip-check --tune` now selects the configuration that keys on the caller's real IP and ignores forged `X-Forwarded-For` / `X-Real-IP` / `CF-Connecting-IP`; PASS in the last three runs |
+| 12 | Notification dispatcher schedule | **VERIFIED** | pg_cron → pg_net → `notify-dispatcher` answers 200 after deploy (`dispatcher-check`) |
+| 13 | Custom domain | not configured | the app runs on `detailflow.pages.dev` |
+
+Local regression (this environment, real Postgres 16 + Supabase Auth + Deno + Pages runtime): 73 unit, 152 DB/API, 19 E2E, 5 Pages-runtime tests, bundle scan clean.
 
 ## Findings fixed during hardening
 
@@ -57,6 +57,9 @@ Everything that can be proven without them was run against real components local
 | `pnpm tenant:seed <slug> …` without `--status` silently skipped the first slug | medium | argument parsing fixed; production seeding uses it |
 | Telegram chat id had no uniqueness: one studio could set another studio's chat and receive or send into it | high | `tenant_notification_settings` with a unique chat id, owner-only RPC, manager+ read RLS |
 | Trigger function `private.create_notification_settings` was executable by PUBLIC (found by the grants audit test) | low | revoked |
+| Hosted Supabase rejects `ALTER ROLE … NOSUPERUSER NOBYPASSRLS` from `postgres` (first hosted deploy) | deploy blocker | migration names only NOINHERIT; runtime + verify-db still enforce the attributes |
+| Rate limits keyed on a Supabase proxy address (first hosted deploy) | high | client IP source auto-tuned and verified against forged headers |
+| Production smoke waited 2 s per reload, shorter than a real page load | test | 15 s per attempt; diagnostics print the booking's notification state on failure |
 
 ## Security checklist
 
@@ -75,23 +78,13 @@ Everything that can be proven without them was run against real components local
 | Forwarded headers | only XFF at the configured hop |
 | Frontend headers | CSP (script-src 'self'), HSTS, frame-ancestors none, nosniff, referrer policy, HTTPS-only API enforced at build |
 
-## Still NOT VERIFIED (needs credentials / network access)
+## Still NOT VERIFIED
 
-1. Creating the Supabase project and `supabase db push` on a hosted **Postgres 15/17** (local verification used Postgres 16).
-2. That the hosted `postgres` role may `grant authenticated, service_role to df_edge` (migration 0005) and that Supavisor accepts `df_edge.<ref>` logins.
-3. Supabase CLI bundling of the functions with the vendored domain code and `npm:` imports.
-4. JWKS verification with the project's asymmetric signing keys, and the exact `iss` value of hosted tokens.
-5. Auth admin API (invite links) with new `sb_secret_` keys.
-6. pg_cron + pg_net + Vault schedule of the dispatcher.
-7. Real Telegram delivery (`api.telegram.org`) to a studio's own chat, including error descriptions of the live Bot API (`pnpm prod:telegram-check` in the deploy workflow).
-8. Real Claude API calls (tool use with `claude-opus-5-5`, refusal fallback beta).
-9. Cloudflare Pages deploy, custom domain, HTTPS certificate, real edge caching.
-10. Client-IP position in `X-Forwarded-For` behind Supabase's gateway (`DF_TRUSTED_PROXY_HOPS`).
-11. Production smoke (`pnpm test:prod`) and `pnpm prod:verify-db` against the real project.
-12. The CI workflows themselves on GitHub Actions (never executed from here).
+1. Claude API live calls (no `ANTHROPIC_API_KEY`).
+2. Custom domain and its certificate (none configured).
+3. Real studio photos and a live (non-demo) studio: GRAPHITE and ICE LAB are demo studios by design (booking notifications are never sent for them).
 
-## To finish go-live
+## Operating
 
-1. Add the repository secrets `SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `DF_OWNER_PASSWORD` (optional: `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`); the GRAPHITE owner links GRAPHITE's chat in Кабинет → Настройки → Telegram — `docs/PRODUCTION.md` §0.
-2. Run **Deploy production**. It creates or reuses the projects and verifies everything listed above against the real services.
-3. Replace this file's statuses with the run's recorded results (`production-smoke` artifact).
+- Re-deploy: GitHub → Actions → **Deploy production** → Run workflow (the GRAPHITE chat id input can stay empty once linked).
+- A new studio: `docs/PRODUCTION.md` §9; its owner links the studio's own Telegram chat in Кабинет → Настройки → Telegram.

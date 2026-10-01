@@ -16,7 +16,9 @@ Current verification state of each step: [`PRODUCTION_STATUS.md`](PRODUCTION_STA
 | `CLOUDFLARE_API_TOKEN` | API token with **Account → Cloudflare Pages → Edit** | dash.cloudflare.com/profile/api-tokens → Create Token → Create Custom Token |
 | `DF_OWNER_PASSWORD` | Password of the GRAPHITE owner account (≥ 8 chars), chosen by the operator | — |
 
-Optional secrets: `TELEGRAM_BOT_TOKEN` (one platform bot for all studios; each studio links its own chat in the owner settings, §7), `ANTHROPIC_API_KEY`. Optional variables: `SUPABASE_PROJECT_REF` (use an existing project), `CF_PAGES_PROJECT` (default `detailflow`).
+Optional secrets: `TELEGRAM_BOT_TOKEN` (one platform bot for all studios; each studio links its own chat in the owner settings, §7), `ANTHROPIC_API_KEY`. Workflow inputs: `graphite_telegram_chat_id` (links GRAPHITE's chat during the deploy), `cloudflare_account_id` (for Pages-only tokens that cannot list accounts). Optional variables: `SUPABASE_PROJECT_REF` (use an existing project; without it the project named `detailflow`, or the account's only project, is used), `CF_PAGES_PROJECT` (default `detailflow`).
+
+Tokens: the Supabase token needs full access (it creates/reads the project, resets the run's database password, sets function secrets); the Cloudflare token needs Account → Cloudflare Pages → Edit.
 
 What a run does, idempotently:
 

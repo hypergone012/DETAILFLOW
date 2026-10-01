@@ -99,14 +99,10 @@ pnpm tenant export north-shine        # DB -> business.export.json
 
 ## Production deploy
 
-One workflow, three repository secrets: [`docs/PRODUCTION.md` §0](docs/PRODUCTION.md). **Deploy production** creates or reuses the Supabase project and the Cloudflare Pages project, applies migrations, deploys the functions, seeds the studios, publishes the app and runs the production checks. Status: **not deployed yet** — the secrets are not set ([status](docs/PRODUCTION_STATUS.md)).
+One workflow, three repository secrets: [`docs/PRODUCTION.md` §0](docs/PRODUCTION.md). **Deploy production** creates or reuses the Supabase project and the Cloudflare Pages project, applies migrations, deploys the functions, seeds the studios, publishes the app and runs the production checks. Status: **deployed** — https://detailflow.pages.dev/s/graphite/ (owner: `/s/graphite/owner/`), verified by the workflow's production checks ([status](docs/PRODUCTION_STATUS.md)).
 
-## Not verified in this environment
+## Not verified
 
-External services that were not reachable or had no credentials here:
-
-- **Hosted Supabase** (`api.supabase.com` blocked by the network policy): migrations, Edge Function deploys and JWKS verification were exercised only against the local stack (Postgres 16 + Supabase Auth built from source + Deno). The assumption that the `postgres` role behind `SUPABASE_DB_URL` can `SET ROLE authenticated/service_role` must be confirmed on the first hosted deploy.
-- **Telegram**: the Bot API contract was tested against a local server implementing `sendMessage`; no message was delivered to `api.telegram.org` (blocked, no bot token).
-- **Claude API**: the tool loop ran with a scripted model; no live call was made (no `ANTHROPIC_API_KEY`).
-- **Cloudflare Pages**: the production build and SW were verified with `vite preview`, not on Pages.
+- **Claude API**: no `ANTHROPIC_API_KEY` configured; the assistant is fail-soft (booking works without it).
+- **Custom domain**: not configured (the app runs on `detailflow.pages.dev`).
 - **Demo imagery** is generated SVG artwork (`branding.demoArtwork: true`); `tenant activate` refuses to go live until it is replaced with the studio's photos.

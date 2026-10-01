@@ -75,7 +75,7 @@ Local regression (this environment, real Postgres 16 + Supabase Auth + Deno + Pa
 | Booking token entropy | 32 bytes HMAC-SHA256, only SHA-256 stored |
 | Error leakage | generic `INTERNAL` to clients; DB error codes mapped to fixed messages |
 | Logs | no bodies, no PII-bearing messages, token redaction |
-| Forwarded headers | only XFF at the configured hop |
+| Forwarded headers | client IP from the source chosen and verified by `client-ip-check --tune` on the hosted platform (XFF hop or a platform-set header); forged XFF / X-Real-IP / CF-Connecting-IP values are rejected by that check |
 | Frontend headers | CSP (script-src 'self'), HSTS, frame-ancestors none, nosniff, referrer policy, HTTPS-only API enforced at build |
 
 ## Still NOT VERIFIED

@@ -7,6 +7,11 @@ name: Deploy production
 # schedule, studios, owners) is created or reused by scripts/prod/provision.ts.
 on:
   workflow_dispatch:
+    inputs:
+      graphite_telegram_chat_id:
+        description: 'Telegram chat id for GRAPHITE notifications (optional, e.g. -1001234567890)'
+        required: false
+        default: ''
 
 concurrency: { group: production-deploy, cancel-in-progress: false }
 permissions: { contents: read }
@@ -76,6 +81,11 @@ jobs:
       - name: Studios (GRAPHITE, ICE LAB) and their owners
         env: { DF_SYNC_OWNER_PASSWORDS: '1' }
         run: pnpm -s tenant:seed graphite ice-lab
+
+      - name: Link GRAPHITE's Telegram chat (workflow input)
+        if: ${{ inputs.graphite_telegram_chat_id != '' }}
+        env: { CHAT_ID: '${{ inputs.graphite_telegram_chat_id }}' }
+        run: pnpm -s tsx scripts/prod/link-telegram-chat.ts graphite "$CHAT_ID"
 
       - name: Frontend — production build (https API enforced) + secret scan
         run: pnpm build:prod

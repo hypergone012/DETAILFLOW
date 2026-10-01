@@ -9,15 +9,19 @@ import {
 import { z } from 'zod'
 import { verifyAccessToken, type AuthConfig, type UserClaims } from '../_shared/auth.ts'
 import { availabilityDays, loadEngineContext, requireOfferedSlot } from '../_shared/booking-core.ts'
-import { asRole, type Sql, type Tx } from '../_shared/db.ts'
+import { asRole, asService, type Sql, type Tx } from '../_shared/db.ts'
 import { HttpError, corsHeaders, errorResponse, json, readJson, routeSegments, type CorsConfig } from '../_shared/http.ts'
+import { explainTelegramError, telegramState, testMessage, type NotificationProvider } from '../_shared/notifications.ts'
 
 export interface OwnerApiDeps {
   sql: Sql
   cors: CorsConfig
   auth: AuthConfig
-  /** Whether the platform Telegram bot token is configured (shown honestly in settings). */
-  telegramConfigured?: boolean
+  /**
+   * Platform Telegram bot (TELEGRAM_BOT_TOKEN lives inside it, server-side only).
+   * null/absent: no token configured; shown honestly in settings.
+   */
+  telegram?: (NotificationProvider & { username?: () => Promise<string | null> }) | null
   now?: () => Date
   log?: (msg: string, extra?: Record<string, unknown>) => void
 }
@@ -44,6 +48,12 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
   const { sql } = deps
 
   const asUser = <T>(claims: UserClaims, fn: (tx: Tx) => Promise<T>) => asRole(sql, 'authenticated', claims, fn)
+
+  let botUsername: string | null = null
+  async function telegramBotUsername(): Promise<string | null> {
+    if (!botUsername && deps.telegram?.username) botUsername = await deps.telegram.username()
+    return botUsername
+  }
 
   /** Tenant visible to this user (RLS: members only). 404 otherwise — never 403, to avoid leaking existence. */
   async function tenantFor(claims: UserClaims, slug: string): Promise<{ id: string; slug: string; name: string; status: string; timezone: string; role: string }> {
@@ -246,18 +256,71 @@ export function createOwnerApi(deps: OwnerApiDeps): (req: Request) => Promise<Re
       return json({ ok: true })
     }
 
-    // GET /:slug/settings ; POST /:slug/settings/telegram {chatId}
+    // GET /:slug/settings ; POST /:slug/settings/telegram {enabled, chatId?} ; POST /:slug/settings/telegram/test
     if (req.method === 'GET' && resource === 'settings') {
       const [s] = await asUser(claims, (tx) => tx`
-        select telegram_chat_id, slot_step_min, min_notice_min, horizon_days, cancel_cutoff_hours, ai_enabled
+        select slot_step_min, min_notice_min, horizon_days, cancel_cutoff_hours, ai_enabled
         from public.tenant_settings where tenant_id = ${tenant.id}`)
       const [last] = await asUser(claims, (tx) => tx`
         select status, last_error, created_at from public.notification_outbox where tenant_id = ${tenant.id} order by created_at desc limit 1`)
-      return json({ settings: s, telegramBotConfigured: deps.telegramConfigured ?? false, lastNotification: last ?? null, role: tenant.role })
+      // Telegram destination: visible to managers and owners of this studio only (RLS), editable by owners.
+      const [n] = await asUser(claims, (tx) => tx<{
+        telegram_enabled: boolean; telegram_chat_id: string | null; telegram_last_test_at: Date | null
+        telegram_last_test_ok: boolean | null; telegram_last_test_error: string | null
+      }[]>`
+        select telegram_enabled, telegram_chat_id, telegram_last_test_at, telegram_last_test_ok, telegram_last_test_error
+        from public.tenant_notification_settings where tenant_id = ${tenant.id}`)
+      let telegram = null
+      if (n) {
+        const [d] = await asUser(claims, (tx) => tx<{ last_sent: Date | null; last_failed: Date | null; last_error: string | null }[]>`
+          select max(processed_at) filter (where status = 'sent') as last_sent,
+                 max(coalesce(processed_at, created_at)) filter (where status = 'failed' or (status = 'pending' and last_error is not null)) as last_failed,
+                 (select o.last_error from public.notification_outbox o
+                  where o.tenant_id = ${tenant.id} and (o.status = 'failed' or (o.status = 'pending' and o.last_error is not null))
+                  order by coalesce(o.processed_at, o.created_at) desc limit 1) as last_error
+          from public.notification_outbox where tenant_id = ${tenant.id}`)
+        const testAt = n.telegram_last_test_at
+        const latest = (a: Date | null | undefined, b: Date | null | undefined) => (a && b ? (a > b ? a : b) : a ?? b ?? null)
+        const lastSuccessAt = latest(d?.last_sent, n.telegram_last_test_ok ? testAt : null)
+        const lastFailureAt = latest(d?.last_failed, n.telegram_last_test_ok === false ? testAt : null)
+        const state = telegramState({ botConfigured: !!deps.telegram, enabled: n.telegram_enabled, chatId: n.telegram_chat_id, lastSuccessAt, lastFailureAt })
+        const failure = state !== 'delivery_error' ? null
+          : n.telegram_last_test_ok === false && testAt && (!d?.last_failed || testAt >= d.last_failed) ? n.telegram_last_test_error : d?.last_error ?? null
+        telegram = {
+          state,
+          botConfigured: !!deps.telegram,
+          botUsername: deps.telegram ? await telegramBotUsername() : null,
+          enabled: n.telegram_enabled,
+          chatId: n.telegram_chat_id,
+          demo: tenant.status === 'demo',
+          lastTest: testAt ? { at: testAt, ok: n.telegram_last_test_ok === true } : null,
+          problem: failure ? explainTelegramError(failure) : null,
+        }
+      }
+      return json({ settings: s, telegram, telegramBotConfigured: !!deps.telegram, lastNotification: last ?? null, role: tenant.role })
     }
-    if (req.method === 'POST' && resource === 'settings' && rid === 'telegram') {
-      const body = await readJson(req, z.strictObject({ chatId: z.string().regex(/^-?\d{3,20}$/).nullable() }))
-      await asUser(claims, (tx) => tx`select public.owner_set_telegram_chat(${tenant.id}, ${body.chatId})`)
+    if (req.method === 'POST' && resource === 'settings' && rid === 'telegram' && !action) {
+      const body = await readJson(req, z.strictObject({
+        enabled: z.boolean(),
+        // Absent: keep the stored chat (toggle only). The studio is taken from the URL + membership, never from the body.
+        chatId: z.string().trim().regex(/^-?\d{3,20}$/).nullable().optional(),
+      }))
+      await asUser(claims, (tx) => tx`select public.owner_set_telegram(${tenant.id}, ${body.enabled}, ${body.chatId ?? null}, ${body.chatId === undefined})`)
+      return json({ ok: true })
+    }
+    if (req.method === 'POST' && resource === 'settings' && rid === 'telegram' && action === 'test') {
+      if (tenant.role !== 'owner') throw new HttpError(403, 'FORBIDDEN')
+      if (!deps.telegram) throw new HttpError(422, 'TELEGRAM_NOT_CONFIGURED')
+      const [n] = await asUser(claims, (tx) => tx<{ telegram_chat_id: string | null }[]>`
+        select telegram_chat_id from public.tenant_notification_settings where tenant_id = ${tenant.id}`)
+      const chatId = n?.telegram_chat_id
+      if (!chatId) throw new HttpError(422, 'TELEGRAM_CHAT_REQUIRED')
+      const [rl] = await asService(sql, (tx) => tx<{ ok: boolean }[]>`select private.hit_rate_limit(${`tg-test:${tenant.id}`}, 60, 5) as ok`)
+      if (!rl?.ok) throw new HttpError(429, 'RATE_LIMITED')
+      // Server-side: the bot token never leaves the function; the destination is this studio's stored chat.
+      const result = await deps.telegram.send(chatId, testMessage(tenant.name, tenant.status === 'demo'))
+      await asService(sql, (tx) => tx`select private.record_telegram_test(${tenant.id}, ${chatId}, ${result.ok}, ${result.ok ? null : result.error})`)
+      if (!result.ok) throw new HttpError(422, 'TELEGRAM_TEST_FAILED', explainTelegramError(result.error))
       return json({ ok: true })
     }
 

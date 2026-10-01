@@ -25,6 +25,9 @@ const DB_ERROR_STATUS: Record<string, number> = {
   CUTOFF_PASSED: 409,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
+  TELEGRAM_CHAT_INVALID: 400,
+  TELEGRAM_CHAT_REQUIRED: 422,
+  TELEGRAM_CHAT_TAKEN: 409,
 }
 
 export function fromDbError(err: unknown): HttpError | null {

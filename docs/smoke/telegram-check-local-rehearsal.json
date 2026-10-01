@@ -1,0 +1,54 @@
+{
+  "label": "local-rehearsal",
+  "at": "2026-10-01T01:21:39.733Z",
+  "telegram": "local Bot API contract server (rehearsal, not live)",
+  "verified": "rehearsal_passed",
+  "steps": [
+    {
+      "step": "platform bot token accepted by Telegram (getMe)",
+      "ok": true,
+      "detail": "@detailflow_e2e_bot"
+    },
+    {
+      "step": "GRAPHITE destination read from its own settings row",
+      "ok": true,
+      "detail": "chat ••••0777"
+    },
+    {
+      "step": "GRAPHITE owner logs in",
+      "ok": true
+    },
+    {
+      "step": "test notification delivered to GRAPHITE chat (server-side, Bot API)",
+      "ok": true
+    },
+    {
+      "step": "GRAPHITE (demo) booking: suppressed, no Bot API call",
+      "ok": true,
+      "detail": "suppressed_demo"
+    },
+    {
+      "step": "throwaway active studio created",
+      "ok": true
+    },
+    {
+      "step": "booking.created delivered by the dispatcher (Bot API)",
+      "ok": true,
+      "detail": "message 1011"
+    },
+    {
+      "step": "cancel through the customer manage link",
+      "ok": true
+    },
+    {
+      "step": "booking.cancelled delivered by the dispatcher (Bot API)",
+      "ok": true,
+      "detail": "message 1012"
+    },
+    {
+      "step": "ICE LAB booking never goes to GRAPHITE’s chat",
+      "ok": true,
+      "detail": "ice-lab: suppressed_demo"
+    }
+  ]
+}

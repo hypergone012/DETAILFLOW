@@ -22,9 +22,10 @@ const authUpstream = env('DF_AUTH_UPSTREAM', 'http://127.0.0.1:54324')
 
 const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
 const dispatcherSecret = env('DF_DISPATCHER_SECRET', 'local-dispatcher-secret')
+const telegram = botToken ? new TelegramProvider(botToken, env('TELEGRAM_API_BASE', 'https://api.telegram.org')) : null
 const dispatcher = createDispatcher({
   sql,
-  provider: botToken ? new TelegramProvider(botToken, env('TELEGRAM_API_BASE', 'https://api.telegram.org')) : null,
+  provider: telegram,
   appUrl: env('DF_APP_URL', 'http://127.0.0.1:5173'),
   secret: dispatcherSecret,
 })
@@ -47,7 +48,7 @@ const functions: Record<string, (req: Request) => Promise<Response>> = {
     manageTokenSecret: env('DF_MANAGE_TOKEN_SECRET', 'local-manage-token-secret-change-me'),
     bookingsPerIpPer10Min: Number(env('DF_BOOKING_RATE_LIMIT', '10')),
   }),
-  'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long'), issuer: env('DF_JWT_ISSUER', 'http://127.0.0.1:54321/auth/v1') }, telegramConfigured: !!botToken }),
+  'owner-api': createOwnerApi({ sql, cors, auth: { jwtSecret: env('DF_JWT_SECRET', 'super-secret-jwt-token-with-at-least-32-characters-long'), issuer: env('DF_JWT_ISSUER', 'http://127.0.0.1:54321/auth/v1') }, telegram }),
 }
 
 async function proxyAuth(req: Request, url: URL): Promise<Response> {

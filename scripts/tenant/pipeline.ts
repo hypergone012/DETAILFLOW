@@ -72,8 +72,9 @@ export async function activationCheck(sql: postgres.Sql, slug: string, business:
   }
   const [{ owners }] = (await sql`select count(*)::int as owners from public.tenant_members where tenant_id = ${t.id} and role = 'owner'`) as unknown as [{ owners: number }]
   if (owners === 0) problems.push('no owner account: run tenant:invite-owner')
-  const [s] = await sql<{ telegram_chat_id: string | null }[]>`select telegram_chat_id from public.tenant_settings where tenant_id = ${t.id}`
-  if (!s?.telegram_chat_id) warnings.push('no Telegram chat configured: new bookings will show as not_configured')
+  const [s] = await sql<{ telegram_enabled: boolean; telegram_chat_id: string | null }[]>`
+    select telegram_enabled, telegram_chat_id from public.tenant_notification_settings where tenant_id = ${t.id}`
+  if (!s?.telegram_chat_id || !s.telegram_enabled) warnings.push('no Telegram chat configured for this studio: new bookings will show as not_configured')
   return { ok: problems.length === 0, problems, warnings }
 }
 

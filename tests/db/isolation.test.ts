@@ -21,6 +21,7 @@ afterAll(() => sql.end())
 const TENANT_TABLES = [
   'tenant_profiles', 'tenant_settings', 'services', 'service_variants', 'resources', 'working_hours',
   'customers', 'vehicles', 'bookings', 'resource_allocations', 'booking_events', 'notification_outbox',
+  'tenant_notification_settings',
 ]
 
 describe('tenant isolation under RLS', () => {
@@ -81,9 +82,9 @@ describe('tenant isolation under RLS', () => {
     expect(row!.status).toBe('checked_in')
   })
 
-  it('tenant_settings (with Telegram chat id) is not readable across tenants', async () => {
-    await sql`update public.tenant_settings set telegram_chat_id = '12345' where tenant_id = ${b.id}`
-    const rows = await asUser(sql, a.ownerId, (tx) => tx`select telegram_chat_id from public.tenant_settings where tenant_id = ${b.id}`)
+  it('Telegram destination is not readable across tenants', async () => {
+    await sql`update public.tenant_notification_settings set telegram_chat_id = '12345' where tenant_id = ${b.id}`
+    const rows = await asUser(sql, a.ownerId, (tx) => tx`select telegram_chat_id from public.tenant_notification_settings where tenant_id = ${b.id}`)
     expect(rows).toEqual([])
   })
 })

@@ -25,6 +25,17 @@ export class TelegramProvider implements NotificationProvider {
     return message.split(this.botToken).join('<redacted>').replace(/bot\d+:[A-Za-z0-9_-]{20,}/g, 'bot<redacted>')
   }
 
+  /** Bot username for the owner's setup instructions (getMe). Never returns or logs the token. */
+  async username(): Promise<string | null> {
+    try {
+      const res = await this.fetchImpl(`${this.apiBase}/bot${this.botToken}/getMe`, { signal: AbortSignal.timeout(5_000) })
+      const body = (await res.json().catch(() => null)) as { ok: boolean; result?: { username?: string } } | null
+      return body?.ok ? body.result?.username ?? null : null
+    } catch {
+      return null
+    }
+  }
+
   async send(chatId: string, text: string): Promise<SendResult> {
     let res: Response
     try {
@@ -62,6 +73,8 @@ export interface OutboxRow {
   tenant_name: string
   tenant_status: 'draft' | 'demo' | 'active' | 'suspended'
   timezone: string
+  /** Destination of this row's tenant (resolved in SQL from the outbox row's tenant, never from a request). */
+  telegram_enabled: boolean
   telegram_chat_id: string | null
   booking: {
     booking_id: string
@@ -111,7 +124,47 @@ export function decide(row: OutboxRow, provider: NotificationProvider | null): D
   if (row.tenant_status === 'demo' || row.booking?.is_demo) return { action: 'suppress_demo' }
   if (!provider) return { action: 'not_configured', reason: 'TELEGRAM_BOT_TOKEN is not set' }
   if (!row.telegram_chat_id) return { action: 'not_configured', reason: 'studio has no Telegram chat id' }
+  if (!row.telegram_enabled) return { action: 'not_configured', reason: 'Telegram is disabled in studio settings' }
   return { action: 'send', target: row.telegram_chat_id }
+}
+
+/** Owner-facing explanation of a provider error (already token-free) — server-generated, never raw secrets. */
+export function explainTelegramError(error: string): string {
+  if (/chat not found/i.test(error)) return 'Чат не найден. Проверьте ID чата и что бот добавлен в этот чат.'
+  if (/bot was kicked|not a member|bot is not a member|have no rights|need administrator|blocked by the user/i.test(error)) return 'Бот не состоит в чате или не может в нём писать. Добавьте бота в чат.'
+  if (/upgraded to a supergroup/i.test(error)) return 'Группа стала супергруппой и сменила ID. Укажите новый ID чата (начинается с -100).'
+  if (/^network:|HTTP 5\d\d|Too Many Requests/i.test(error)) return 'Telegram сейчас недоступен. Попробуйте ещё раз через минуту.'
+  if (/Unauthorized|HTTP 401|HTTP 404/i.test(error)) return 'Бот платформы отклонён Telegram. Сообщите администратору платформы.'
+  return 'Telegram не принял сообщение.'
+}
+
+export function testMessage(tenantName: string, demo: boolean): string {
+  return [
+    `DETAILFLOW · ${tenantName}`,
+    'Тестовое сообщение: этот чат подключён к уведомлениям студии.',
+    demo
+      ? 'Студия в демо-режиме: уведомления о записях сюда не отправляются, пока студия не запущена.'
+      : 'Новые записи, подтверждения, переносы и отмены будут приходить сюда.',
+  ].join('\n')
+}
+
+export type TelegramState = 'connected' | 'not_configured' | 'disabled' | 'delivery_error'
+
+/**
+ * Owner-visible state. Delivery error = the most recent delivery outcome
+ * (test message or booking notification) failed.
+ */
+export function telegramState(input: {
+  botConfigured: boolean
+  enabled: boolean
+  chatId: string | null
+  lastSuccessAt: Date | null
+  lastFailureAt: Date | null
+}): TelegramState {
+  if (!input.botConfigured || !input.chatId) return 'not_configured'
+  if (!input.enabled) return 'disabled'
+  if (input.lastFailureAt && (!input.lastSuccessAt || input.lastFailureAt > input.lastSuccessAt)) return 'delivery_error'
+  return 'connected'
 }
 
 export const MAX_ATTEMPTS = 5

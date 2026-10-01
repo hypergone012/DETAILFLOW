@@ -16,7 +16,7 @@ Current verification state of each step: [`PRODUCTION_STATUS.md`](PRODUCTION_STA
 | `CLOUDFLARE_API_TOKEN` | API token with **Account → Cloudflare Pages → Edit** | dash.cloudflare.com/profile/api-tokens → Create Token → Create Custom Token |
 | `DF_OWNER_PASSWORD` | Password of the GRAPHITE owner account (≥ 8 chars), chosen by the operator | — |
 
-Optional secrets: `TELEGRAM_BOT_TOKEN` (+ `TELEGRAM_CHAT_ID` for the live delivery check), `ANTHROPIC_API_KEY`. Optional variables: `SUPABASE_PROJECT_REF` (use an existing project), `CF_PAGES_PROJECT` (default `detailflow`).
+Optional secrets: `TELEGRAM_BOT_TOKEN` (one platform bot for all studios; each studio links its own chat in the owner settings, §7), `ANTHROPIC_API_KEY`. Optional variables: `SUPABASE_PROJECT_REF` (use an existing project), `CF_PAGES_PROJECT` (default `detailflow`).
 
 What a run does, idempotently:
 
@@ -47,7 +47,7 @@ Keep the file outside git (`chmod 600`). `SUPABASE_URL`, `SUPABASE_DB_URL` and t
 | `DF_ALLOWED_ORIGINS` | yes | Exact origins allowed by CORS, comma-separated, `https://` only (e.g. `https://app.example.ru,https://detailflow.pages.dev`) |
 | `DF_APP_URL` | yes | Public app URL used in Telegram links |
 | `DF_DISPATCHER_SECRET` | yes | Shared secret between pg_cron and `notify-dispatcher` (≥ 32 chars) |
-| `TELEGRAM_BOT_TOKEN` | for notifications | From @BotFather. Unset ⇒ notifications are recorded as `not_configured` |
+| `TELEGRAM_BOT_TOKEN` | for notifications | From @BotFather. One platform bot; **destinations are per studio in the database** (§7), there is no global chat id. Unset ⇒ notifications are recorded as `not_configured` |
 | `ANTHROPIC_API_KEY` | for the assistant | Unset ⇒ assistant reports unavailable; booking is unaffected |
 | `DF_AI_MODEL` | no | Default `claude-opus-5-5` |
 | `DF_AI_EFFORT` | no | `low` (default) \| `medium` \| `high` |
@@ -122,13 +122,33 @@ pnpm exec wrangler pages deploy apps/web/dist --project-name detailflow --branch
 - Custom domain: Pages → Custom domains; then add it to `DF_ALLOWED_ORIGINS` and `DF_APP_URL` and redeploy the functions' secrets.
 - Local check of the same runtime: `pnpm test:pages` (wrangler pages dev / workerd).
 
-## 7. Telegram
+## 7. Telegram (tenant-scoped)
 
-1. Create a bot with @BotFather → `TELEGRAM_BOT_TOKEN` (function secret only; never in the frontend, logs or responses — error messages are scrubbed of the token).
-2. Add the bot to the studio's group; get the chat id (e.g. send a message and read `getUpdates` once from a trusted machine).
-3. Owner sets the chat id in **Кабинет → Настройки** (owner role only).
-4. Live check from a trusted machine: `TELEGRAM_BOT_TOKEN=… TELEGRAM_CHAT_ID=… pnpm prod:telegram-check`.
-Events: `booking.created`, `booking.confirmed`, `booking.cancelled`, `booking.rescheduled`. A studio in **demo** status never sends: the dispatcher marks those rows `suppressed_demo` before any provider call.
+**Model.** One platform bot (`TELEGRAM_BOT_TOKEN`, Edge Function secret only) and one destination chat **per studio**, stored in `public.tenant_notification_settings` (`telegram_enabled`, `telegram_chat_id`, last test result). There is no global chat id.
+
+```
+booking (tenant X) → notification_outbox (tenant X, composite FK to the booking)
+  → notify-dispatcher → private.claim_notifications: chat = settings row of tenant X
+  → demo? suppressed_demo (no Bot API call)  · no token / no chat / disabled? not_configured
+  → Bot API sendMessage(chat of X) → sent | retry with backoff (pending) | failed after 5 attempts
+```
+
+Guarantees (database-level, regression-tested in `tests/api/telegram.test.ts`):
+- a chat id belongs to **one studio** (unique index): a studio cannot point its notifications at another studio's chat; carried-over duplicates stay with the oldest studio;
+- only the studio's **owner** changes its row (`public.owner_set_telegram`, membership re-checked); managers/owners of that studio can read it (RLS); staff, other studios and `anon` cannot;
+- the destination is resolved from the outbox row's tenant — no request field (booking body, owner API body) can name a chat or a studio (strict schemas);
+- demo studios are suppressed in the dispatcher before any provider call, even with token + chat + enabled;
+- the bot token never leaves the functions: not in the database, responses, logs, outbox errors or test results (scrubbed; leak test).
+
+**Owner setup (Кабинет → Настройки → Telegram).** States: *Подключено*, *Не настроено* (no platform bot or no chat), *Выключено*, *Ошибка доставки* (latest delivery or test failed, with a server-generated explanation). The chat id is shown masked.
+1. Create a Telegram group for the studio's notifications.
+2. Add the platform bot (its @username is shown in the settings) and write any message in the group.
+3. Open the group on web.telegram.org: the number after `#` in the address bar (e.g. `-1001234567890`) is the chat id.
+4. Paste it, tick «Отправлять уведомления…», save, press **«Отправить тестовое сообщение»** — the function sends it server-side to this studio's chat (rate-limited, 5/min). Allowed for demo studios too: it is an explicit owner action, not a booking notification.
+
+Events: `booking.created`, `booking.confirmed`, `booking.cancelled`, `booking.rescheduled`.
+
+**Live check** (`pnpm prod:telegram-check`, run by the deploy workflow when `TELEGRAM_BOT_TOKEN` is set): getMe → GRAPHITE's chat from its settings row (not linked yet ⇒ exit 2, NOT VERIFIED) → owner login + server-side test message to GRAPHITE's chat → GRAPHITE (demo) booking suppressed → a throwaway *active* studio borrows GRAPHITE's chat for the check: booking.created and booking.cancelled delivered by the scheduled dispatcher → ICE LAB booking never reaches GRAPHITE's chat → cleanup restores GRAPHITE's chat. Report: `docs/smoke/telegram-check-<label>.json`; against anything but `api.telegram.org` it is labelled a rehearsal, never VERIFIED.
 
 ## 8. Claude API
 

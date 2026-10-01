@@ -1,6 +1,6 @@
 {
   "label": "local-rehearsal",
-  "at": "2026-09-30T23:35:41.334Z",
+  "at": "2026-10-01T01:26:37.422Z",
   "passed": true,
   "results": [
     {
@@ -71,6 +71,16 @@
     },
     {
       "check": "exclusion constraint on resource_allocations",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "one Telegram chat belongs to one studio (unique)",
+      "ok": true,
+      "severity": "fail"
+    },
+    {
+      "check": "no bot token column in the database",
       "ok": true,
       "severity": "fail"
     },

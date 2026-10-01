@@ -24,7 +24,7 @@ const check = (name: string, ok: boolean, detail?: unknown, severity: 'fail' | '
 const TENANT_TABLES = [
   'tenant_profiles', 'tenant_settings', 'tenant_members', 'services', 'service_variants', 'resources',
   'working_hours', 'schedule_exceptions', 'customers', 'vehicles', 'bookings', 'resource_blocks',
-  'resource_allocations', 'booking_events', 'notification_outbox', 'ai_tool_calls',
+  'resource_allocations', 'booking_events', 'notification_outbox', 'ai_tool_calls', 'tenant_notification_settings',
 ]
 const EXPECTED_COMPOSITE_FKS = [
   'bookings->customers', 'bookings->services', 'bookings->vehicles', 'booking_events->bookings',
@@ -78,6 +78,11 @@ try {
 
   const [excl] = await sql`select pg_get_constraintdef(oid) as def from pg_constraint where conname = 'resource_allocations_no_overlap' and contype = 'x'`
   check('exclusion constraint on resource_allocations', !!excl && /gist \(resource_id WITH =, during WITH &&\) WHERE \(\(released_at IS NULL\)\)/.test(excl.def), excl)
+
+  const [chatUnique] = await sql`select 1 as ok from pg_indexes where indexname = 'tenant_notification_settings_chat_unique'`
+  check('one Telegram chat belongs to one studio (unique)', !!chatUnique)
+  const tokenColumns = await sql`select table_name, column_name from information_schema.columns where table_schema in ('public','private') and column_name ilike '%token%' and column_name not in ('manage_token_hash')`
+  check('no bot token column in the database', tokenColumns.length === 0, tokenColumns)
 
   const [idem] = await sql`select 1 as ok from pg_constraint where conname = 'bookings_tenant_id_idempotency_key_key' and contype = 'u'`
   check('unique (tenant_id, idempotency_key)', !!idem)

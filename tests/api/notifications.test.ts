@@ -52,7 +52,9 @@ beforeAll(async () => {
   edge = edgeConnect()
   active = await createTenant(sql, { status: 'active', bays: 5 })
   demo = await createTenant(sql, { status: 'demo', bays: 5 })
-  await sql`update public.tenant_settings set telegram_chat_id = '123456789' where tenant_id in (${active.id}, ${demo.id})`
+  // One chat per studio (unique): each tenant has its own destination.
+  await sql`update public.tenant_notification_settings set telegram_enabled = true, telegram_chat_id = '123456789' where tenant_id = ${active.id}`
+  await sql`update public.tenant_notification_settings set telegram_enabled = true, telegram_chat_id = '223456789' where tenant_id = ${demo.id}`
   // Drain rows created by other test files so each test sees only its own.
   await sql`update public.notification_outbox set status = 'not_configured' where status = 'pending'`
 })
@@ -146,11 +148,11 @@ describe('dispatcher endpoint & owner settings', () => {
   })
 
   it('only the studio owner can set its Telegram chat', async () => {
-    await asUser(sql, active.ownerId, (tx) => tx`select public.owner_set_telegram_chat(${active.id}, '-1001234567890')`)
-    const [s] = await sql`select telegram_chat_id from public.tenant_settings where tenant_id = ${active.id}`
+    await asUser(sql, active.ownerId, (tx) => tx`select public.owner_set_telegram(${active.id}, true, '-1001234567890')`)
+    const [s] = await sql`select telegram_chat_id from public.tenant_notification_settings where tenant_id = ${active.id}`
     expect(s!.telegram_chat_id).toBe('-1001234567890')
-    expect(await errorOf(asUser(sql, active.staffId, (tx) => tx`select public.owner_set_telegram_chat(${active.id}, '1234')`))).toBe('NOT_FOUND')
-    expect(await errorOf(asUser(sql, demo.ownerId, (tx) => tx`select public.owner_set_telegram_chat(${active.id}, '1234')`))).toBe('NOT_FOUND')
-    await sql`update public.tenant_settings set telegram_chat_id = '123456789' where tenant_id = ${active.id}`
+    expect(await errorOf(asUser(sql, active.staffId, (tx) => tx`select public.owner_set_telegram(${active.id}, true, '1234')`))).toBe('NOT_FOUND')
+    expect(await errorOf(asUser(sql, demo.ownerId, (tx) => tx`select public.owner_set_telegram(${active.id}, true, '1234')`))).toBe('NOT_FOUND')
+    await sql`update public.tenant_notification_settings set telegram_chat_id = '123456789' where tenant_id = ${active.id}`
   })
 })

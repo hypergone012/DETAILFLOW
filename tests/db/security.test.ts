@@ -15,7 +15,7 @@ afterAll(() => sql.end())
 const PUBLIC_TABLES = [
   'tenants', 'tenant_profiles', 'tenant_settings', 'tenant_members', 'services', 'service_variants', 'resources',
   'working_hours', 'schedule_exceptions', 'customers', 'vehicles', 'bookings', 'resource_blocks',
-  'resource_allocations', 'booking_events', 'notification_outbox', 'ai_tool_calls',
+  'resource_allocations', 'booking_events', 'notification_outbox', 'ai_tool_calls', 'tenant_notification_settings',
 ]
 
 describe('grants audit', () => {

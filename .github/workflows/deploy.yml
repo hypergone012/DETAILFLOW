@@ -1,7 +1,8 @@
 name: Deploy production
 # Manual only. Needs three repository secrets (docs/PRODUCTION.md §0):
 #   SUPABASE_ACCESS_TOKEN, CLOUDFLARE_API_TOKEN, DF_OWNER_PASSWORD
-# Optional: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ANTHROPIC_API_KEY.
+# Optional: TELEGRAM_BOT_TOKEN (one platform bot; each studio links its own chat in the
+# owner settings), ANTHROPIC_API_KEY.
 # Everything else (project, database password, keys, function secrets, roles,
 # schedule, studios, owners) is created or reused by scripts/prod/provision.ts.
 on:
@@ -23,7 +24,7 @@ jobs:
       CF_PAGES_PROJECT: ${{ vars.CF_PAGES_PROJECT }}
       SMOKE_LABEL: production
       HAS_ANTHROPIC: ${{ secrets.ANTHROPIC_API_KEY != '' }}
-      HAS_TELEGRAM_CHECK: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+      HAS_TELEGRAM: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
     steps:
       - name: Required secrets present
         run: |
@@ -116,12 +117,12 @@ jobs:
         if: ${{ !cancelled() && steps.functions.outcome == 'success' && env.HAS_ANTHROPIC == 'true' }}
         run: pnpm prod:ai-smoke
 
-      - name: Telegram live delivery
-        if: ${{ !cancelled() && env.HAS_TELEGRAM_CHECK == 'true' }}
+      # Tenant-scoped: GRAPHITE's chat comes from its settings row. Exit 2 = not linked yet (NOT VERIFIED, not a failure).
+      - name: Telegram live delivery (GRAPHITE chat, booking created/cancelled, ICE LAB isolation)
+        if: ${{ !cancelled() && steps.functions.outcome == 'success' && env.HAS_TELEGRAM == 'true' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: pnpm prod:telegram-check
+        run: pnpm -s prod:telegram-check || [ $? -eq 2 ]
 
       - name: Summary
         if: always()
@@ -137,10 +138,12 @@ jobs:
       - name: Check smoke results for secrets
         if: always()
         id: clean
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           node -e '
             const fs = require("fs"), path = require("path");
-            const names = ["SUPABASE_ACCESS_TOKEN","CLOUDFLARE_API_TOKEN","DF_OWNER_PASSWORD","SUPABASE_SERVICE_ROLE_KEY","DATABASE_URL","DF_DB_URL","DF_EDGE_PASSWORD","DF_MANAGE_TOKEN_SECRET","DF_DISPATCHER_SECRET","PROD_ICE_OWNER_PASSWORD"];
+            const names = ["SUPABASE_ACCESS_TOKEN","CLOUDFLARE_API_TOKEN","DF_OWNER_PASSWORD","SUPABASE_SERVICE_ROLE_KEY","DATABASE_URL","DF_DB_URL","DF_EDGE_PASSWORD","DF_MANAGE_TOKEN_SECRET","DF_DISPATCHER_SECRET","PROD_ICE_OWNER_PASSWORD","TELEGRAM_BOT_TOKEN"];
             const values = names.map((n) => process.env[n]).filter((v) => v && v.length >= 8);
             const dir = "docs/smoke";
             const files = fs.existsSync(dir) ? fs.readdirSync(dir).map((f) => path.join(dir, f)) : [];

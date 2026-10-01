@@ -85,14 +85,29 @@ export const ownerApi = {
   saveNotes: (slug: string, id: string, internalNotes: string) => call(`${slug}/customers/${id}`, { method: 'PATCH', body: { internalNotes } }),
   settings: (slug: string) =>
     call<{
-      settings: { telegram_chat_id: string | null; slot_step_min: number; min_notice_min: number; horizon_days: number; cancel_cutoff_hours: number; ai_enabled: boolean }
+      settings: { slot_step_min: number; min_notice_min: number; horizon_days: number; cancel_cutoff_hours: number; ai_enabled: boolean }
+      /** null for staff: the studio's Telegram destination is visible to managers and owners only. */
+      telegram: TelegramSettings | null
       telegramBotConfigured: boolean
       lastNotification: { status: string; last_error: string | null; created_at: string } | null
       role: string
     }>(`${slug}/settings`),
-  setTelegramChat: (slug: string, chatId: string | null) => call(`${slug}/settings/telegram`, { method: 'POST', body: { chatId } }),
+  /** chatId omitted = keep the stored chat (toggle only). */
+  setTelegram: (slug: string, body: { enabled: boolean; chatId?: string | null }) => call(`${slug}/settings/telegram`, { method: 'POST', body }),
+  sendTelegramTest: (slug: string) => call<{ ok: true }>(`${slug}/settings/telegram/test`, { method: 'POST', body: {} }),
   createBlock: (slug: string, body: { resourceId: string; startsAt: string; endsAt: string; reason: string }) => call<{ id: string }>(`${slug}/blocks`, { method: 'POST', body }),
   removeBlock: (slug: string, id: string) => call(`${slug}/blocks/${id}`, { method: 'DELETE' }),
+}
+
+export interface TelegramSettings {
+  state: 'connected' | 'not_configured' | 'disabled' | 'delivery_error'
+  botConfigured: boolean
+  botUsername: string | null
+  enabled: boolean
+  chatId: string | null
+  demo: boolean
+  lastTest: { at: string; ok: boolean } | null
+  problem: string | null
 }
 
 export function useMe(enabled: boolean) {

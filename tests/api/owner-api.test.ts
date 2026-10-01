@@ -180,10 +180,13 @@ describe('booking operations', () => {
 
   it('settings: Telegram state is reported honestly and only the owner can change the chat', async () => {
     const r = await call(owner, 'GET', '/owner-api/graphite/settings', { token: graphiteToken })
-    expect(r.body).toMatchObject({ telegramBotConfigured: false, role: 'owner' })
-    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { chatId: '987654321' } })).status).toBe(200)
-    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { chatId: 'not-a-chat' } })).status).toBe(400)
-    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: iceToken, body: { chatId: '1234' } })).status).toBe(404)
+    expect(r.body).toMatchObject({ telegramBotConfigured: false, role: 'owner', telegram: { state: 'not_configured', botConfigured: false } })
+    expect(JSON.stringify(r.body.settings)).not.toMatch(/telegram/)
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { enabled: true, chatId: '987654321' } })).status).toBe(200)
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { enabled: true, chatId: 'not-a-chat' } })).status).toBe(400)
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: iceToken, body: { enabled: true, chatId: '1234' } })).status).toBe(404)
+    // Body cannot name another studio: unknown keys are rejected.
+    expect((await call(owner, 'POST', '/owner-api/graphite/settings/telegram', { token: graphiteToken, body: { enabled: true, chatId: '987654321', tenantId: ids.iceLab } })).status).toBe(400)
   })
 
   it('customer notes are editable only within the own studio', async () => {

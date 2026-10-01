@@ -29,7 +29,7 @@ Everything that can be proven without them was run against real components local
 | 4 | Production Edge Functions | **NOT VERIFIED** deployed; handlers verified on Deno and under the production DB role | 131 DB/API tests run the handlers as `df_edge`; `deno check` of all entrypoints |
 | 5 | Production RLS | **NOT VERIFIED** on hosted; verified locally + read-only verifier ready | `tests/db/security.test.ts`, `isolation.test.ts`; `pnpm prod:verify-db` |
 | 6 | Production frontend | **NOT VERIFIED** on Cloudflare; production build verified on the Pages runtime locally | `pnpm test:pages` 5/5: SPA fallback, headers/CSP, no CSP violations or third-party requests through booking + owner login, SW + offline, per-studio manifests |
-| 7 | Telegram | **NOT VERIFIED** live | provider + dispatcher tested against a local Bot API contract server (created/cancelled delivered, demo sends nothing); `pnpm prod:telegram-check` → `docs/smoke/telegram-check.json` = NOT VERIFIED (no token, host blocked) |
+| 7 | Telegram (tenant-scoped) | **NOT VERIFIED** live (no `TELEGRAM_BOT_TOKEN`, `api.telegram.org` blocked here, no deployment) | per-studio destination table + RLS + unique chat; 21 API/DB tests in `tests/api/telegram.test.ts` (GRAPHITE→GRAPHITE chat, ICE LAB→ICE LAB chat, chat takeover rejected, cross-studio settings rejected, demo = 0 calls, no token = not_configured, outage → retry → exactly one message, token leak scan) against a local Bot API contract server; E2E `tests/e2e/telegram-settings.spec.ts` (owner links chat, Connected, test message, ICE LAB cannot take the chat, demo booking sends nothing); live-check script rehearsed: `docs/smoke/telegram-check-local-rehearsal.json` (`rehearsal_passed`, not live) |
 | 8 | Claude API | **NOT VERIFIED** live | tool loop verified with a scripted model and real tools/DB; `pnpm prod:ai-smoke` → NOT VERIFIED (no key) |
 | 9 | Cloudflare deployment | **NOT VERIFIED** | `wrangler pages deploy` wired in `deploy.yml`; API blocked, no token |
 | 10 | Production smoke | **NOT VERIFIED** on production; **rehearsed 10/10** on the production build + Pages runtime + local backend | `docs/smoke/prod-e2e-local-rehearsal.json`: GRAPHITE booking → manage link → customer reschedule → owner login → owner reschedule → status → notifications → cancel; ICE LAB timezone/schedule/catalog/isolation; 360/390/768/1440 px; PWA (manifest, SW, offline shell, booking needs network). Live-Telegram branch rehearsed earlier: `docs/smoke/prod-e2e-local-rehearsal-live-branch.json` |
@@ -55,6 +55,8 @@ Everything that can be proven without them was run against real components local
 | `.wrangler/` emulator state committed | hygiene | untracked, ignored |
 | CI e2e failed on every GitHub run: the function gateway starts before Playwright's globalSetup and refused to start without `df_edge` (and a seeded studio) on a fresh runner | CI | DB prepared before Playwright; CI #17 green |
 | `pnpm tenant:seed <slug> …` without `--status` silently skipped the first slug | medium | argument parsing fixed; production seeding uses it |
+| Telegram chat id had no uniqueness: one studio could set another studio's chat and receive or send into it | high | `tenant_notification_settings` with a unique chat id, owner-only RPC, manager+ read RLS |
+| Trigger function `private.create_notification_settings` was executable by PUBLIC (found by the grants audit test) | low | revoked |
 
 ## Security checklist
 
@@ -81,7 +83,7 @@ Everything that can be proven without them was run against real components local
 4. JWKS verification with the project's asymmetric signing keys, and the exact `iss` value of hosted tokens.
 5. Auth admin API (invite links) with new `sb_secret_` keys.
 6. pg_cron + pg_net + Vault schedule of the dispatcher.
-7. Real Telegram delivery (`api.telegram.org`), including error descriptions of the live Bot API.
+7. Real Telegram delivery (`api.telegram.org`) to a studio's own chat, including error descriptions of the live Bot API (`pnpm prod:telegram-check` in the deploy workflow).
 8. Real Claude API calls (tool use with `claude-opus-5-5`, refusal fallback beta).
 9. Cloudflare Pages deploy, custom domain, HTTPS certificate, real edge caching.
 10. Client-IP position in `X-Forwarded-For` behind Supabase's gateway (`DF_TRUSTED_PROXY_HOPS`).
@@ -90,6 +92,6 @@ Everything that can be proven without them was run against real components local
 
 ## To finish go-live
 
-1. Add the repository secrets `SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `DF_OWNER_PASSWORD` (optional: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ANTHROPIC_API_KEY`) — `docs/PRODUCTION.md` §0.
+1. Add the repository secrets `SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `DF_OWNER_PASSWORD` (optional: `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`); the GRAPHITE owner links GRAPHITE's chat in Кабинет → Настройки → Telegram — `docs/PRODUCTION.md` §0.
 2. Run **Deploy production**. It creates or reuses the projects and verifies everything listed above against the real services.
 3. Replace this file's statuses with the run's recorded results (`production-smoke` artifact).

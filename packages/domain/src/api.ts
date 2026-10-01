@@ -197,6 +197,11 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Нужно войти заново.',
   FORBIDDEN: 'Нет доступа.',
   NOT_FOUND: 'Не найдено.',
+  TELEGRAM_CHAT_INVALID: 'ID чата — это число, например -1001234567890.',
+  TELEGRAM_CHAT_REQUIRED: 'Чтобы включить уведомления, укажите ID чата.',
+  TELEGRAM_CHAT_TAKEN: 'Этот чат уже привязан к другой студии. Создайте отдельный чат для этой студии.',
+  TELEGRAM_NOT_CONFIGURED: 'Бот платформы не подключён: сообщение отправить нельзя.',
+  TELEGRAM_TEST_FAILED: 'Telegram не принял тестовое сообщение.',
   INTERNAL: 'Что-то пошло не так. Попробуйте ещё раз.',
 }
 

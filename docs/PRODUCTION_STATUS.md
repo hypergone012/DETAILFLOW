@@ -15,6 +15,8 @@ Date: 2026-10-01. Branch: `claude/sleepy-dijkstra-kuo7qx`.
 
 Credentials present: none (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` all unset).
 
+**GitHub Actions path (2026-10-01).** The production workflow now provisions everything from three repository secrets (`docs/PRODUCTION.md` §0). Its first run, [Deploy production #1](https://github.com/hypergone012/DETAILFLOW/actions/runs/36796760080), stopped at the first step because the repository has none of them (`SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `DF_OWNER_PASSWORD`). Nothing was deployed. CI on GitHub is green for the first time ([CI #17](https://github.com/hypergone012/DETAILFLOW/actions/runs/36796755748)); every earlier run had failed in the e2e job (fixed, see below).
+
 Everything that can be proven without them was run against real components locally (PostgreSQL 16, Supabase Auth built from source, Edge Functions on Deno, the Cloudflare Pages runtime via wrangler/workerd, Chromium). Production steps are scripted and wired to fail or report **NOT VERIFIED** — never to simulate success.
 
 ## Status by area
@@ -30,7 +32,9 @@ Everything that can be proven without them was run against real components local
 | 7 | Telegram | **NOT VERIFIED** live | provider + dispatcher tested against a local Bot API contract server (created/cancelled delivered, demo sends nothing); `pnpm prod:telegram-check` → `docs/smoke/telegram-check.json` = NOT VERIFIED (no token, host blocked) |
 | 8 | Claude API | **NOT VERIFIED** live | tool loop verified with a scripted model and real tools/DB; `pnpm prod:ai-smoke` → NOT VERIFIED (no key) |
 | 9 | Cloudflare deployment | **NOT VERIFIED** | `wrangler pages deploy` wired in `deploy.yml`; API blocked, no token |
-| 10 | Production smoke | **NOT VERIFIED** on production; **rehearsed 4/4** on the production build + Pages runtime + local backend | `docs/smoke/prod-e2e-local-rehearsal.json`; live-Telegram branch rehearsed: `docs/smoke/prod-e2e-local-rehearsal-live-branch.json`; `docs/smoke/prod-e2e-production.json` records the 4 tests **skipped as NOT VERIFIED** |
+| 10 | Production smoke | **NOT VERIFIED** on production; **rehearsed 10/10** on the production build + Pages runtime + local backend | `docs/smoke/prod-e2e-local-rehearsal.json`: GRAPHITE booking → manage link → customer reschedule → owner login → owner reschedule → status → notifications → cancel; ICE LAB timezone/schedule/catalog/isolation; 360/390/768/1440 px; PWA (manifest, SW, offline shell, booking needs network). Live-Telegram branch rehearsed earlier: `docs/smoke/prod-e2e-local-rehearsal-live-branch.json` |
+| 11 | New studio pipeline | **NOT VERIFIED** on production; **13/13 steps** locally | `docs/smoke/tenant-pipeline-local-rehearsal.json`: new → validate → seed (draft = 404) → invite → accept + password → single-use link → login → owner API sees only this studio → activate refused on demo artwork → activate → public → cleanup |
+| 12 | Client IP behind the platform | **NOT VERIFIED** (needs the hosted gateway) | `scripts/prod/client-ip-check.ts`; locally it correctly reports a forged `X-Forwarded-For` as client-controlled (no proxy in front of the local gateway) |
 
 ## Findings fixed during hardening
 
@@ -49,6 +53,8 @@ Everything that can be proven without them was run against real components local
 | `DF_MANAGE_TOKEN_SECRET` length unchecked | low | ≥ 32 chars or the function does not start |
 | Auth admin calls sent new `sb_secret_` keys as a Bearer JWT | low | `apikey` only for new secret keys |
 | `.wrangler/` emulator state committed | hygiene | untracked, ignored |
+| CI e2e failed on every GitHub run: the function gateway starts before Playwright's globalSetup and refused to start without `df_edge` (and a seeded studio) on a fresh runner | CI | DB prepared before Playwright; CI #17 green |
+| `pnpm tenant:seed <slug> …` without `--status` silently skipped the first slug | medium | argument parsing fixed; production seeding uses it |
 
 ## Security checklist
 
@@ -84,6 +90,6 @@ Everything that can be proven without them was run against real components local
 
 ## To finish go-live
 
-- Environment: allow `api.supabase.com`, `<ref>.supabase.co`, `api.telegram.org`, `api.cloudflare.com` (or run `.github/workflows/deploy.yml` on GitHub, which needs none of that).
-- Secrets (environment variables in the cloud environment settings, or GitHub environment `production`): `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ANTHROPIC_API_KEY`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`.
-- Then follow `docs/PRODUCTION.md` §2–§10 and replace this file's statuses with the recorded results.
+1. Add the repository secrets `SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `DF_OWNER_PASSWORD` (optional: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ANTHROPIC_API_KEY`) — `docs/PRODUCTION.md` §0.
+2. Run **Deploy production**. It creates or reuses the projects and verifies everything listed above against the real services.
+3. Replace this file's statuses with the run's recorded results (`production-smoke` artifact).

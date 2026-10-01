@@ -1,0 +1,67 @@
+{
+  "label": "local-rehearsal",
+  "at": "2026-10-01T00:35:21.023Z",
+  "passed": true,
+  "steps": [
+    {
+      "step": "new from template",
+      "ok": true,
+      "detail": "Asia/Novosibirsk, accent #7fd18b"
+    },
+    {
+      "step": "validate business.json",
+      "ok": true
+    },
+    {
+      "step": "seed as draft",
+      "ok": true,
+      "detail": "draft studio is not public (404)"
+    },
+    {
+      "step": "owner invite link",
+      "ok": true
+    },
+    {
+      "step": "owner accepts the invite",
+      "ok": true
+    },
+    {
+      "step": "owner sets a password",
+      "ok": true
+    },
+    {
+      "step": "invite link cannot be reused",
+      "ok": true
+    },
+    {
+      "step": "owner logs in with the password",
+      "ok": true
+    },
+    {
+      "step": "owner API: membership of exactly this studio",
+      "ok": true,
+      "detail": "pipeline-check"
+    },
+    {
+      "step": "owner API: other studio is 404",
+      "ok": true
+    },
+    {
+      "step": "activate refused with template artwork",
+      "ok": true,
+      "detail": "branding.demoArtwork is true: replace demo artwork with the studio’s own photos; contacts.phone is required for a live studio"
+    },
+    {
+      "step": "activate",
+      "ok": true
+    },
+    {
+      "step": "published: public storefront",
+      "ok": true
+    },
+    {
+      "step": "cleanup",
+      "ok": true
+    }
+  ]
+}

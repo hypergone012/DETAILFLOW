@@ -104,6 +104,14 @@ jobs:
         if: ${{ !cancelled() && steps.pages.outcome == 'success' }}
         run: pnpm test:prod
 
+      - name: Client IP behind the platform proxies (rate limits)
+        if: ${{ !cancelled() && steps.functions.outcome == 'success' }}
+        run: pnpm -s tsx scripts/prod/client-ip-check.ts
+
+      - name: New studio pipeline (new, validate, seed, invite, accept, activate, publish, cleanup)
+        if: ${{ !cancelled() && steps.pages.outcome == 'success' }}
+        run: pnpm -s tsx scripts/prod/tenant-pipeline-check.ts
+
       - name: Claude live smoke through the deployed assistant
         if: ${{ !cancelled() && steps.functions.outcome == 'success' && env.HAS_ANTHROPIC == 'true' }}
         run: pnpm prod:ai-smoke

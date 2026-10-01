@@ -77,7 +77,7 @@
                 },
                 {
                   "type": "booking-ref",
-                  "description": "GSURDR"
+                  "description": "CYZD59"
                 }
               ],
               "expectedStatus": "passed",
@@ -88,12 +88,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 18369,
+                  "duration": 26142,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-09-30T23:36:05.664Z",
+                  "startTime": "2026-10-01T00:48:45.838Z",
                   "annotations": [
                     {
                       "type": "tenant-status",
@@ -101,7 +101,7 @@
                     },
                     {
                       "type": "booking-ref",
-                      "description": "GSURDR"
+                      "description": "CYZD59"
                     }
                   ],
                   "attachments": []
@@ -146,12 +146,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 460,
+                      "duration": 500,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-30T23:36:24.142Z",
+                      "startTime": "2026-10-01T00:49:12.101Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -180,12 +180,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 32,
+                      "duration": 33,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-30T23:36:24.615Z",
+                      "startTime": "2026-10-01T00:49:12.617Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -214,12 +214,12 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1147,
+                      "duration": 1141,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-30T23:36:24.657Z",
+                      "startTime": "2026-10-01T00:49:12.662Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -235,13 +235,225 @@
           ]
         }
       ]
+    },
+    {
+      "title": "viewports-pwa.spec.ts",
+      "file": "viewports-pwa.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "360px: storefront, service, booking start, owner login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1049,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:49:13.826Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "23f9654007b511c727fd-23f0d50b3f5e519208a7",
+          "file": "viewports-pwa.spec.ts",
+          "line": 18,
+          "column": 3
+        },
+        {
+          "title": "390px: storefront, service, booking start, owner login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1024,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:49:14.885Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "23f9654007b511c727fd-473319a4332cc940dce1",
+          "file": "viewports-pwa.spec.ts",
+          "line": 18,
+          "column": 3
+        },
+        {
+          "title": "768px: storefront, service, booking start, owner login, dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1823,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:49:15.922Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "23f9654007b511c727fd-efea1a189c28116bb35f",
+          "file": "viewports-pwa.spec.ts",
+          "line": 18,
+          "column": 3
+        },
+        {
+          "title": "1440px: storefront, service, booking start, owner login, dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1723,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:49:17.754Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "23f9654007b511c727fd-6c194d36aa99014b7c6f",
+          "file": "viewports-pwa.spec.ts",
+          "line": 18,
+          "column": 3
+        },
+        {
+          "title": "owner dashboard on a phone (390px)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 864,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:49:19.488Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "23f9654007b511c727fd-4e26a36fe6d6befb3ff0",
+          "file": "viewports-pwa.spec.ts",
+          "line": 55,
+          "column": 1
+        },
+        {
+          "title": "PWA: per-studio manifest and scope, service worker, offline studio shell, booking needs network",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1674,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-01T00:49:20.380Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "23f9654007b511c727fd-2ad9dd261b463b2a9564",
+          "file": "viewports-pwa.spec.ts",
+          "line": 65,
+          "column": 1
+        }
+      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-30T23:36:04.828Z",
-    "duration": 21070.076,
-    "expected": 4,
+    "startTime": "2026-10-01T00:48:44.984Z",
+    "duration": 37199.862,
+    "expected": 10,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

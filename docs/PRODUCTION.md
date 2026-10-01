@@ -6,6 +6,34 @@ Current verification state of each step: [`PRODUCTION_STATUS.md`](PRODUCTION_STA
 
 ---
 
+## 0. Go-live from three secrets (recommended path)
+
+`.github/workflows/deploy.yml` (Actions → **Deploy production** → Run workflow) does every step of §1–§10 by itself through the Supabase Management API and the Cloudflare API (`scripts/prod/provision.ts`). It needs three **repository secrets** (Settings → Secrets and variables → Actions → New repository secret):
+
+| Secret | What it is | Where to get it |
+|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Personal access token of the Supabase account (`sbp_…`) | supabase.com/dashboard/account/tokens → Generate new token |
+| `CLOUDFLARE_API_TOKEN` | API token with **Account → Cloudflare Pages → Edit** | dash.cloudflare.com/profile/api-tokens → Create Token → Create Custom Token |
+| `DF_OWNER_PASSWORD` | Password of the GRAPHITE owner account (≥ 8 chars), chosen by the operator | — |
+
+Optional secrets: `TELEGRAM_BOT_TOKEN` (+ `TELEGRAM_CHAT_ID` for the live delivery check), `ANTHROPIC_API_KEY`. Optional variables: `SUPABASE_PROJECT_REF` (use an existing project), `CF_PAGES_PROJECT` (default `detailflow`).
+
+What a run does, idempotently:
+
+1. Gate: typecheck, lint, unit tests, `deno check` of the functions.
+2. **prepare**: finds the Supabase project named `detailflow` or creates it (`eu-central-1`, the account's first organization, or a new one), waits until it is healthy (restores a paused free project), sets a fresh `postgres` password for this run only (never stored), reads the API keys and the pooler host, finds or creates the Cloudflare Pages project, and keeps the generated application secrets in the project's **Vault** (`df_edge_password`, `df_manage_token_secret`, `df_dispatcher_secret`, `df_project_url`, `df_smoke_ice_owner_password`) so later runs reuse them. Every secret is registered with the Actions log masker before use (the repository is public).
+3. Migrations through the session pooler (`scripts/db/migrate.ts`, same history table as the Supabase CLI).
+4. **configure**: `df_edge` LOGIN + password, Auth settings (site URL, redirect allow-list, signup disabled, anonymous users disabled), Edge Function secrets (§1), pg_cron + pg_net dispatcher schedule (§5).
+5. `supabase functions deploy` for the four functions (`--use-api`, shared import map from `supabase/config.toml`).
+6. GRAPHITE and ICE LAB (demo) with their owners: GRAPHITE's password = `DF_OWNER_PASSWORD`, ICE LAB's = generated (Vault).
+7. `pnpm build:prod` (https API enforced + bundle secret scan) and `wrangler pages deploy`.
+8. Checks: `prod:verify-db`, production smoke incl. 360/390/768/1440 px and PWA (§10.2), client IP behind the platform (§10.4, `scripts/prod/client-ip-check.ts`), new-studio pipeline (`scripts/prod/tenant-pipeline-check.ts`), live Claude and Telegram checks when their secrets exist.
+9. Smoke results are uploaded as the `production-smoke` artifact only after a scan proves no secret value is inside.
+
+The run summary lists the public, owner and API URLs. §1–§10 below describe the same steps for running them by hand.
+
+---
+
 ## 1. Environment variables
 
 ### Edge Function secrets (`supabase secrets set --env-file <file>`)
@@ -133,7 +161,9 @@ PROD_APP_URL=https://app… PROD_SUPABASE_URL=https://<ref>.supabase.co PROD_SUP
 PROD_GRAPHITE_OWNER_EMAIL=… PROD_GRAPHITE_OWNER_PASSWORD=… PROD_ICE_OWNER_EMAIL=… PROD_ICE_OWNER_PASSWORD=… \
   pnpm test:prod
 ```
-- GRAPHITE: fresh browser → service → vehicle → free time → booking → owner login → finds it → status change → Telegram (expects *отправлено* when the studio is active, *не отправлено (демо)* when demo) → cancels its own booking and waits for the second notification.
+- GRAPHITE: fresh browser → service → vehicle → free time → booking → manage link (no account) → customer reschedules → owner login → finds it → owner reschedules → status change → Telegram (expects *отправлено* when the studio is active, *не отправлено (демо)* when demo) → cancels its own booking and waits until every event (rescheduled, cancelled) has gone through the dispatcher.
+- Widths 360, 390, 768, 1440 px: storefront, service, booking start, owner login and dashboard without horizontal scroll; owner dashboard on a phone.
+- PWA: per-studio manifest/scope/icons, service worker controls the page, the studio opens offline, booking offline shows «Нет соединения» instead of stale slots.
 - ICE LAB: different timezone/grid/catalog/closed days; GRAPHITE unreachable through ICE LAB's public API, UI and owner API.
 Results: `docs/smoke/prod-e2e-production.json`. Missing credentials ⇒ tests are **skipped as NOT VERIFIED**, never passed.
 
@@ -141,7 +171,7 @@ Results: `docs/smoke/prod-e2e-production.json`. Missing credentials ⇒ tests ar
 `pnpm prod:telegram-check`, `pnpm prod:ai-smoke` → `docs/smoke/*.json`.
 
 ### 10.4 Client IP behind the platform
-Rate limits key on the client IP taken from `X-Forwarded-For` at position `DF_TRUSTED_PROXY_HOPS` from the right. After the first deploy, call a function from two different networks and compare the `ai-ip:`/`book:` keys in `private.rate_limit_buckets` (hashed); if both land in one bucket, raise `DF_TRUSTED_PROXY_HOPS` by one.
+Rate limits key on the client IP taken from `X-Forwarded-For` at position `DF_TRUSTED_PROXY_HOPS` from the right. `scripts/prod/client-ip-check.ts` (run by the deploy workflow) sends one request with a forged `X-Forwarded-For` prefix and checks which hashed key in `private.rate_limit_buckets` was charged: the runner's public IP (correct), the forged value (client-controlled: lower the setting) or anything else (a proxy address shared by every customer: raise it).
 
 ### 10.5 Automated
 `.github/workflows/deploy.yml` (manual dispatch) runs the gate tests, migrations, secrets, functions, `build:prod`, Pages deploy, `prod:verify-db`, `test:prod`, `prod:ai-smoke`, and uploads `docs/smoke/`.

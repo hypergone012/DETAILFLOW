@@ -97,6 +97,10 @@ pnpm tenant export north-shine        # DB -> business.export.json
 | Demo never sends real notifications | dispatcher suppresses demo before any provider call: `tests/api/notifications.test.ts` (0 requests to the Bot API), E2E shows «не отправлено (демо)» |
 | End-to-end customer → owner flow | `tests/e2e/customer-owner.spec.ts` (booking → owner login via Supabase Auth → workflow → final price → customer sees «Выдано») |
 
+## Production deploy
+
+One workflow, three repository secrets: [`docs/PRODUCTION.md` §0](docs/PRODUCTION.md). **Deploy production** creates or reuses the Supabase project and the Cloudflare Pages project, applies migrations, deploys the functions, seeds the studios, publishes the app and runs the production checks. Status: **not deployed yet** — the secrets are not set ([status](docs/PRODUCTION_STATUS.md)).
+
 ## Not verified in this environment
 
 External services that were not reachable or had no credentials here:

@@ -119,9 +119,12 @@ async function ensureProject(): Promise<{ project: Project; dbPassword: string }
     project = all.find((p) => p.name === name)
   }
   if (!project) {
-    const orgs = await supabase<Array<{ id: string; slug: string; name: string }>>('GET', '/organizations')
-    const org = process.env.SUPABASE_ORG_SLUG ? orgs.find((o) => o.slug === process.env.SUPABASE_ORG_SLUG) : orgs[0]
-    if (!org) throw new Error('No Supabase organization is available to this token')
+    type Org = { id: string; slug: string; name: string }
+    const orgs = await supabase<Org[]>('GET', '/organizations')
+    let org = process.env.SUPABASE_ORG_SLUG ? orgs.find((o) => o.slug === process.env.SUPABASE_ORG_SLUG) : orgs[0]
+    if (!org && process.env.SUPABASE_ORG_SLUG) throw new Error(`organization ${process.env.SUPABASE_ORG_SLUG} is not available to this token`)
+    // A brand-new account may have no organization yet.
+    org ??= await supabase<Org>('POST', '/organizations', { name: 'DETAILFLOW' })
     console.log(`creating Supabase project "${name}" in organization "${org.name}"`)
     project = await supabase<Project>('POST', '/projects', {
       name,

@@ -34,6 +34,16 @@ test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Te
   const ref = (await page.getByText(/ЗАПИСЬ №/).innerText()).replace(/.*№\s*/, '').trim()
   test.info().annotations.push({ type: 'booking-ref', description: ref })
 
+  // Customer: the manage link works without an account; move the booking to another day.
+  const before = await page.getByText(/Когда/).locator('..').innerText()
+  await page.getByRole('button', { name: 'Перенести' }).click()
+  const sheet = page.getByRole('dialog')
+  await sheet.getByRole('tab').and(page.locator(':not([disabled])')).nth(3).click()
+  await sheet.getByRole('radio').first().click()
+  await sheet.getByRole('button', { name: 'Перенести' }).click()
+  await expect(sheet).toBeHidden()
+  expect(await page.getByText(/Когда/).locator('..').innerText()).not.toBe(before)
+
   // Owner: separate context
   const ownerCtx = await browser.newContext({ viewport: { width: 1360, height: 860 } })
   const owner = await ownerCtx.newPage()
@@ -44,6 +54,15 @@ test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Te
   await expect(owner.locator('[aria-busy="false"] tbody tr')).toHaveCount(1)
   await owner.locator('tbody tr').getByRole('link').click()
   await expect(owner.getByText(`№ ${ref}`)).toBeVisible()
+
+  // Owner moves it once more (one transaction: the old slot stays if the new one is taken).
+  await owner.getByRole('button', { name: 'Перенести' }).click()
+  const ownerSheet = owner.getByRole('dialog')
+  await ownerSheet.getByRole('tab').and(owner.locator(':not([disabled])')).nth(4).click()
+  await ownerSheet.getByRole('radio').first().click()
+  await ownerSheet.getByRole('button', { name: 'Перенести' }).click()
+  await expect(ownerSheet).toBeHidden()
+  await expect(owner.getByText(/Перенесена на/)).toHaveCount(2) // customer's move + owner's move
 
   const action = (await owner.getByRole('button', { name: 'Подтвердить', exact: true }).count()) ? 'Подтвердить' : 'Принять авто'
   await owner.getByRole('button', { name: action, exact: true }).click()
@@ -62,11 +81,13 @@ test('GRAPHITE: fresh browser -> booking -> owner sees it -> status change -> Te
   await owner.getByRole('dialog').getByPlaceholder('Причина').fill('smoke test cleanup')
   await owner.getByRole('button', { name: 'Отменить запись' }).click()
   await expect(owner.getByText('Отменена').first()).toBeVisible()
-  // Second event (booking.cancelled) goes through the same path.
+  // Every event (created/confirmed, rescheduled, cancelled) goes through the same path.
   await expect(async () => {
     await owner.reload()
     await expect(owner.getByText('booking.cancelled')).toBeVisible({ timeout: 2_000 })
-    await expect(owner.getByText(expected, { exact: true })).toHaveCount(2, { timeout: 2_000 })
+    await expect(owner.getByText('booking.rescheduled').first()).toBeVisible({ timeout: 2_000 })
+    const rows = await owner.locator('section', { has: owner.getByRole('heading', { name: 'Уведомления студии' }) }).locator('li').count()
+    await expect(owner.getByText(expected, { exact: true })).toHaveCount(rows, { timeout: 2_000 })
   }).toPass({ timeout: 150_000, intervals: [5_000] })
   await customerCtx.close()
   await ownerCtx.close()

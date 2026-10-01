@@ -214,6 +214,10 @@ async function ensurePagesProject(): Promise<{ accountId: string; project: strin
     accountId = accounts[0]!.id
   }
   const name = process.env.CF_PAGES_PROJECT || 'detailflow'
+  const verify = await fetch(`${CF}/user/tokens/verify`, { headers: { authorization: `Bearer ${need('CLOUDFLARE_API_TOKEN')}` } })
+  if (!verify.ok) {
+    throw new Error('CLOUDFLARE_API_TOKEN is not a valid API token (use "Create Token" at dash.cloudflare.com/profile/api-tokens, not the Global API Key)')
+  }
   let project: { name: string; subdomain: string }
   try {
     project = await cloudflare('GET', `/accounts/${accountId}/pages/projects/${name}`)

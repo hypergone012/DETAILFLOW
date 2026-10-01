@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       cloudflare_account_id:
-        description: 'Cloudflare Account ID (optional; identifier, not a secret)'
+        description: 'Cloudflare Account ID (identifier, not a secret)'
         required: false
-        default: ''
+        default: 'e8b800e6e4d7a3a9fdd34cf47d79d11b'
       graphite_telegram_chat_id:
         description: 'Telegram chat id for GRAPHITE notifications (optional, e.g. -1001234567890)'
         required: false
